@@ -81,7 +81,6 @@
 #include "d_main.h"
 
 #include "host.h"
-#include "debug.h"
 
 //#include "strife_icon.c"
 
@@ -553,21 +552,20 @@ void D_DoomLoop (void)
     {
         wipegamestate = gamestate;
     }
+}
 
-    while (!finish)
-    {
-        // frame syncronous IO operations
-        I_StartFrame ();
+void D_RunFrame() {
+  // frame syncronous IO operations
+  I_StartFrame (); 
 
-        // process one or more tics
-        TryRunTics (); // will run at least one tic
+  // process one or more tics
+  TryRunTics (); // will run at least one tic
 
-        S_UpdateSounds (players[consoleplayer].mo);// move positional sounds
+  S_UpdateSounds (players[consoleplayer].mo);// move positional sounds
 
-        // Update display, next frame, with current state.
-        if (screenvisible)
-            D_Display ();
-    }
+  // Update display, next frame, with current state.
+  if (screenvisible)
+    D_Display ();
 }
 
 
@@ -2150,40 +2148,6 @@ void D_DoomMain (void)
     if (gamemode == commercial && W_CheckNumForName("map01") < 0)
         storedemo = true;
     */
-
-    //!
-    // @arg <x>
-    // @category demo
-    // @vanilla
-    //
-    // Record a demo named x.lmp.
-    //
-
-    p = M_CheckParmWithArgs("-record", 1);
-
-    if (p)
-    {
-        G_RecordDemo (myargv[p+1]);
-        autostart = true;
-    }
-    D_IntroTick(); // [STRIFE]
-
-    p = M_CheckParmWithArgs("-playdemo", 1);
-    if (p)
-    {
-        singledemo = true;              // quit after one demo
-        G_DeferedPlayDemo (demolumpname);
-        D_DoomLoop ();  // never returns
-    }
-    D_IntroTick(); // [STRIFE]
-
-    p = M_CheckParmWithArgs("-timedemo", 1);
-    if (p)
-    {
-        G_TimeDemo (demolumpname);
-        D_DoomLoop ();  // never returns
-    }
-    D_IntroTick(); // [STRIFE]
 
     if (startloadgame >= 0)
     {

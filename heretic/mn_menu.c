@@ -342,7 +342,7 @@ void MN_DrTextA(const char *text, int x, int y)
         {
             p = W_CacheLumpNum(FontABaseLump + c - 33, PU_CACHE);
             V_DrawPatch(x, y, p);
-            x += SHORT(p->width) - 1;
+            x += (int16_t)(p->width) - 1;
         }
     }
 }
@@ -371,7 +371,7 @@ int MN_TextAWidth(const char *text)
         else
         {
             p = W_CacheLumpNum(FontABaseLump + c - 33, PU_CACHE);
-            width += SHORT(p->width) - 1;
+            width += (int16_t)(p->width) - 1;
         }
     }
     return (width);
@@ -400,7 +400,7 @@ void MN_DrTextB(const char *text, int x, int y)
         {
             p = W_CacheLumpNum(FontBBaseLump + c - 33, PU_CACHE);
             V_DrawPatch(x, y, p);
-            x += SHORT(p->width) - 1;
+            x += (int16_t)(p->width) - 1;
         }
     }
 }
@@ -429,7 +429,7 @@ int MN_TextBWidth(const char *text)
         else
         {
             p = W_CacheLumpNum(FontBBaseLump + c - 33, PU_CACHE);
-            width += SHORT(p->width) - 1;
+            width += (int16_t)(p->width) - 1;
         }
     }
     return (width);

@@ -1,7 +1,10 @@
+const parameters = new URLSearchParams(window.location.search);
+const game = parameters.get('game');
+
 // memory shared between WASM and JavaScript
 var wasmMemory = new WebAssembly.Memory({
-  "initial": 256,
-  "maximum": 256
+  "initial": 512,
+  "maximum": 512
 });
 
 // ImageData requires a Uint8ClampedArray
@@ -53,13 +56,13 @@ function draw(ts) {
   requestAnimationFrame(draw);
 }
 
-function _fd_write(fd, iov, iovcnt, pnum) {}
+function _fd_write() {}
 function _fd_close() {}
 function _fd_seek() {}
 function _clock_time_get() {}
-function _proc_exit(status) {}
+function _proc_exit() {}
 
-function _getnow(tp) {
+function _get_now(tp) {
   var now = performance.now();
   HEAP32[tp >> 2] = now / 1e3 | 0;
   HEAP32[tp + 4 >> 2] = now % 1e3 * 1e3 * 1e3 | 0;
@@ -81,24 +84,29 @@ var env = {
   "fd_seek": _fd_seek,
   "clock_time_get": _clock_time_get,
   "proc_exit": _proc_exit,
-  "getnow": _getnow,
+  "get_now": _get_now,
   "console_log": _console_log,
 }
 
 // load and run the WASM code in "doom.wasm"
 WebAssembly.instantiateStreaming(
-    fetch("doom.wasm"),
+    fetch(game + '.wasm'),
     { env: env, wasi_snapshot_preview1: env }
   ).then(obj => {
 
+    const addr = obj.instance.exports.DoomWadName();
+    for (i = 0; HEAPU8[addr + i] != 0; i++);
+    const buffer = HEAPU8.slice(addr, addr + i);
+    const wadName = decoder.decode(buffer);
+
     // fetch the WAD file
-    fetch("DOOM1.WAD")
+    fetch(wadName)
       .then(res  => res.arrayBuffer())
       .then(data => {
         // create Uint8 data view
         const wad = new Uint8Array(data);
         // copy the WAD to WASM memory
-        const addr = obj.instance.exports.DoomWad(wad.byteLength);
+        const addr = obj.instance.exports.DoomWadAlloc(wad.byteLength);
         for (i = 0; i < wad.byteLength; i++) {
           HEAPU8[addr + i] = wad[i];
         }

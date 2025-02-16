@@ -23,7 +23,6 @@
 #include "d_ticcmd.h"
 #include "d_event.h"
 
-
 typedef void (*atexit_func_t)(void);
 
 // Called by DoomMain.

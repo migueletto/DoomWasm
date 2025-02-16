@@ -43,7 +43,6 @@
 #include "w_main.h"
 #include "am_map.h"
 #include "host.h"
-#include "debug.h"
 
 //#include "hexen_icon.c"
 
@@ -535,36 +534,6 @@ void D_DoomMain(void)
     CheckRecordFrom();
 
     //!
-    // @arg <x>
-    // @category demo
-    // @vanilla
-    //
-    // Record a demo named x.lmp.
-    //
-
-    p = M_CheckParm("-record");
-    if (p && p < myargc - 1)
-    {
-        G_RecordDemo(startskill, 1, startepisode, startmap, myargv[p + 1]);
-        H2_GameLoop();          // Never returns
-    }
-
-    p = M_CheckParmWithArgs("-playdemo", 1);
-    if (p)
-    {
-        singledemo = true;      // Quit after one demo
-        G_DeferedPlayDemo(demolumpname);
-        H2_GameLoop();          // Never returns
-    }
-
-    p = M_CheckParmWithArgs("-timedemo", 1);
-    if (p)
-    {
-        G_TimeDemo(demolumpname);
-        H2_GameLoop();          // Never returns
-    }
-
-    //!
     // @category game
     // @arg <s>
     // @vanilla
@@ -842,21 +811,20 @@ void H2_GameLoop(void)
     I_InitGraphics();
     V_RestoreBuffer();
     I_SetPalette(W_CacheLumpName("PLAYPAL", PU_CACHE));
+}
 
-    while (!finish)
-    {
-        // Frame syncronous IO operations
-        I_StartFrame();
+void D_RunFrame(void) {
+  // Frame syncronous IO operations
+  I_StartFrame();
 
-        // Process one or more tics
-        // Will run at least one tic
-        TryRunTics();
+  // Process one or more tics
+  // Will run at least one tic
+  TryRunTics();
 
-        // Move positional sounds
-        //S_UpdateSounds(players[displayplayer].mo);
+  // Move positional sounds
+  //S_UpdateSounds(players[displayplayer].mo);
 
-        DrawAndBlit();
-    }
+  DrawAndBlit();
 }
 
 //==========================================================================

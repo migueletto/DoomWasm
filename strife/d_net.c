@@ -36,7 +36,6 @@
 #include "d_loop.h"
 
 #include "host.h"
-#include "debug.h"
 
 ticcmd_t *netcmds;
 

@@ -111,13 +111,13 @@ void SV_WriteByte(byte val)
 
 void SV_WriteWord(unsigned short val)
 {
-    val = SHORT(val);
+    val = (int16_t)(val);
     SV_Write(&val, sizeof(unsigned short));
 }
 
 void SV_WriteLong(unsigned int val)
 {
-    val = LONG(val);
+    val = (int32_t)(val);
     SV_Write(&val, sizeof(int));
 }
 
@@ -155,14 +155,14 @@ uint16_t SV_ReadWord(void)
 {
     uint16_t result;
     SV_Read(&result, sizeof(unsigned short));
-    return SHORT(result);
+    return (int16_t)(result);
 }
 
 uint32_t SV_ReadLong(void)
 {
     uint32_t result;
     SV_Read(&result, sizeof(int));
-    return LONG(result);
+    return (int32_t)(result);
 }
 
 //

@@ -21,6 +21,7 @@
 #define __I_SWAP__
 
 #include <stdint.h>
+#include <endian.h>
 
 #define SHORT(x)  ((signed short) htole16(x))
 #define LONG(x)   ((signed int) htole32(x))

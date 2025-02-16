@@ -19,3 +19,11 @@ char *gameWad(int i) {
 char *gameMsgOn(void) {
   return "messageson";
 }
+
+char *gameConfig(int i) {
+  return "";
+}
+
+char *gameExtraConfig(int i) {
+  return "";
+}

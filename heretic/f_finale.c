@@ -207,10 +207,10 @@ void F_TextWrite(void)
         }
 
         w = W_CacheLumpNum(FontABaseLump + c - 33, PU_CACHE);
-        if (cx + SHORT(w->width) > SCREENWIDTH)
+        if (cx + (int16_t)(w->width) > SCREENWIDTH)
             break;
         V_DrawPatch(cx, cy, w);
-        cx += SHORT(w->width);
+        cx += (int16_t)(w->width);
     }
 
 }
@@ -222,7 +222,7 @@ void F_DrawPatchCol(int x, patch_t * patch, int col)
     byte *source, *dest, *desttop;
     int count;
 
-    column = (column_t *) ((byte *) patch + LONG(patch->columnofs[col]));
+    column = (column_t *) ((byte *) patch + (int32_t)(patch->columnofs[col]));
     desttop = I_VideoBuffer + x;
 
 // step through the posts in a column

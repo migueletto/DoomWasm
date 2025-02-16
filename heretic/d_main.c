@@ -47,7 +47,6 @@
 #include "am_map.h"
 
 #include "host.h"
-#include "debug.h"
 
 //#include "heretic_icon.c"
 
@@ -251,20 +250,19 @@ void D_DoomLoop(void)
     I_SetPalette(W_CacheLumpName("PLAYPAL", PU_CACHE));
 
     main_loop_started = true;
+}
 
-    while (!finish)
-    {
-        // Frame syncronous IO operations
-        I_StartFrame();
+void D_RunFrame(void) {
+  // Frame syncronous IO operations
+  I_StartFrame();
 
-        // Process one or more tics
-        // Will run at least one tic
-        TryRunTics();
+  // Process one or more tics
+  // Will run at least one tic
+  TryRunTics();
 
-        // Move positional sounds
-        S_UpdateSounds(players[consoleplayer].mo);
-        D_Display();
-    }
+  // Move positional sounds
+  S_UpdateSounds(players[consoleplayer].mo);
+  D_Display();
 }
 
 /*
@@ -1108,36 +1106,6 @@ void D_DoomMain(void)
 //
 
     D_CheckRecordFrom();
-
-    //!
-    // @arg <x>
-    // @category demo
-    // @vanilla
-    //
-    // Record a demo named x.lmp.
-    //
-
-    p = M_CheckParmWithArgs("-record", 1);
-    if (p)
-    {
-        G_RecordDemo(startskill, 1, startepisode, startmap, myargv[p + 1]);
-        D_DoomLoop();           // Never returns
-    }
-
-    p = M_CheckParmWithArgs("-playdemo", 1);
-    if (p)
-    {
-        singledemo = true;      // Quit after one demo
-        G_DeferedPlayDemo(demolumpname);
-        D_DoomLoop();           // Never returns
-    }
-
-    p = M_CheckParmWithArgs("-timedemo", 1);
-    if (p)
-    {
-        G_TimeDemo(demolumpname);
-        D_DoomLoop();           // Never returns
-    }
 
     //!
     // @category game

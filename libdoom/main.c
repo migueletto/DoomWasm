@@ -44,7 +44,7 @@ extern void D_DoomMain(void);
 extern void D_RunFrame(void);
 
 extern void console_log(char *buf);
-extern void getnow(struct timespec *tp);
+extern void get_now(struct timespec *tp);
 
 uint32_t DG_color32(uint32_t r, uint32_t g, uint32_t b) {
   // 32 bits color ABGR (A is MSB)
@@ -55,7 +55,7 @@ static int64_t gettime(void) {
   struct timespec tp;
   int64_t ts;
 
-  getnow(&tp);
+  get_now(&tp);
   ts = ((int64_t)tp.tv_sec) * 1000000 + ((int64_t)tp.tv_nsec) / 1000;
 
   return ts;
@@ -76,14 +76,14 @@ static void DG_Finish(void) {
 static uint8_t convertToDoomKey(int key) {
   if (key >= 'A' && key <= 'Z') {
     key += 32;
-  }
-
-  switch (key) {
-    case 38: key = 173; break;
-    case 40: key = 175; break;
-    case 37: key = 172; break;
-    case 39: key = 174; break;
-    case 17: key = 157; break;
+  } else {
+    switch (key) {
+      case 38: key = 173; break;
+      case 40: key = 175; break;
+      case 37: key = 172; break;
+      case 39: key = 174; break;
+      case 17: key = 157; break;
+    }
   }
 
   return key;
@@ -112,6 +112,7 @@ static void setIntVariable(char *name, int n) {
   M_SetVariable(name, value);
 }
 
+/*
 static char *getGameRoot(char *name) {
   char *rootdir;
   int len;
@@ -122,6 +123,7 @@ static char *getGameRoot(char *name) {
 
   return rootdir;
 }
+*/
 
 int DG_SleepMs(uint32_t ms) {
   //DG_debug(1, "DG_SleepMs %d", ms);
@@ -221,9 +223,8 @@ int DG_read(dg_file_t *f, void *buf, int n) {
 
   if (f && buf) {
     r = n < (f->size - f->pos) ? n : f->size - f->pos;
-    memcpy(buf, f->buffer + f->pos, n);
-    //DG_debug(1 ,"DG_read \"%s\" size=%d pos=%d n=%d: %d", f->name, f->size, f->pos, n, r);
-    f->pos += n;
+    memcpy(buf, f->buffer + f->pos, r);
+    f->pos += r;
   }
 
   return r;
@@ -249,8 +250,8 @@ int DG_seek(dg_file_t *f, int offset) {
 int DG_tell(dg_file_t *f) {
   int r = 0;
 
-  if (r) {
-    return f->pos;
+  if (f) {
+    r = f->pos;
   }
 
   return r;
@@ -267,11 +268,8 @@ int DG_filesize(dg_file_t *f) {
 }
 
 int DG_mkdir(char *name) {
-  int r = 0;
-
   DG_debug(1 ,"DG_mkdir(\"%s\")", name);
-
-  return r;
+  return -1;
 }
 
 int DG_remove(char *name) {
@@ -318,18 +316,15 @@ char *DG_fgets(dg_file_t *f, char *s, int size) {
   if (f && s && size > 0) {
     for (; i < size-1;) {
       if (DG_eof(f)) {
-        //DG_debug(1, "DG_fgets \"%s\" pos=%d i=%d eof", f->name, f->pos, i);
         break;
       }
       if (DG_read(f, &s[i], 1) != 1) {
-        //DG_debug(1, "DG_fgets \"%s\" pos=%d i=%d error", f->name, f->pos, i);
         r = NULL;
         break;
       }
       i++;
       if (s[i-1] == '\n') {
         s[i] = 0;
-        //DG_debug(1, "DG_fgets \"%s\" %d \"%s\")", f->name, i, i ? s : "");
         break;
       }
     }
@@ -396,17 +391,19 @@ void DoomInit(void) {
   myargv = argv;
 
   M_FindResponseFile();
-  DG_debug(1, "M_FindResponseFile()");
   M_SetExeDir();
-  DG_debug(1, "M_SetExeDir()");
   DG_Init();
-  DG_debug(1, "DG_Init()");
 
   D_DoomMain();
   DG_Finish();
 }
 
-void *DoomWad(int len) {
+char *DoomWadName(void) {
+  return gameWad(0);
+}
+
+void *DoomWadAlloc(int len) {
+  DG_debug(1, "allocatind %d bytes for WAD", len);
   wad.buffer = malloc(len);
   wad.size = len;
   return wad.buffer;

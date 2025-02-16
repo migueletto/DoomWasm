@@ -32,17 +32,20 @@ STRIFESOURCE=strife/am_map.c strife/d_items.c strife/d_main.c strife/d_net.c str
 STRIFEOBJS=$(STRIFESOURCE:%.c=%.wasm)
 STRIFEFLAGS=-I./strife -DSTRIFE
 
+#LINKFLAGS=--no-entry -s INITIAL_MEMORY=33554432 -s IMPORTED_MEMORY -s EXPORTED_FUNCTIONS=_DoomInit,_DoomStep,_DoomKey,_DoomWadName,_DoomWadAlloc -s ERROR_ON_UNDEFINED_SYMBOLS=0
+LINKFLAGS=--no-entry -s INITIAL_MEMORY=50331648 -s IMPORTED_MEMORY -s EXPORTED_FUNCTIONS=_DoomInit,_DoomStep,_DoomKey,_DoomWadName,_DoomWadAlloc -s ERROR_ON_UNDEFINED_SYMBOLS=0
+
 $(DOOM).wasm: $(DOOMOBJS) libdoom/libdoom.a
-	$(EMCC) -o $@ --no-entry -s IMPORTED_MEMORY -s EXPORTED_FUNCTIONS=_DoomInit,_DoomStep,_DoomKey,_DoomWad -s ERROR_ON_UNDEFINED_SYMBOLS=0 $(DOOMOBJS) libdoom/libdoom.a
+	$(EMCC) -o $@ $(LINKFLAGS) $(DOOMOBJS) libdoom/libdoom.a
 
-$(HERETIC).dlib: $(HERETICOBJS) libdoom/libdoom.a
-	$(EMCC) -o $@ $(HERETICOBJS) libdoom/libdoom.a
+$(HERETIC).wasm: $(HERETICOBJS) libdoom/libdoom.a
+	$(EMCC) -o $@ $(LINKFLAGS) $(HERETICOBJS) libdoom/libdoom.a
 
-$(HEXEN).dlib: $(HEXENOBJS) libdoom/libdoom.a
-	$(EMCC) -o $@ $(HEXENOBJS) libdoom/libdoom.a
+$(HEXEN).wasm: $(HEXENOBJS) libdoom/libdoom.a
+	$(EMCC) -o $@ $(LINKFLAGS) $(HEXENOBJS) libdoom/libdoom.a
 
-$(STRIFE).dlib: $(STRIFEOBJS) libdoom/libdoom.a
-	$(EMCC) -o $@ $(STRIFEOBJS) libdoom/libdoom.a
+$(STRIFE).wasm: $(STRIFEOBJS) libdoom/libdoom.a
+	$(EMCC) -o $@ $(LINKFLAGS) $(STRIFEOBJS) libdoom/libdoom.a
 
 libdoom/libdoom.a: $(LIBOBJS)
 	$(EMAR) cr $@ $(LIBOBJS)
@@ -54,13 +57,13 @@ doom/%.wasm: doom/%.c
 	$(EMCC) $(CFLAGS) $(DOOMFLAGS) -c -o $@ $<
 
 heretic/%.wasm: heretic/%.c
-	$(CC) $(CFLAGS) $(HERETICFLAGS) -c -o $@ $<
+	$(EMCC) $(CFLAGS) $(HERETICFLAGS) -c -o $@ $<
 
 hexen/%.wasm: hexen/%.c
-	$(CC) $(CFLAGS) $(HEXENFLAGS) -c -o $@ $<
+	$(EMCC) $(CFLAGS) $(HEXENFLAGS) -c -o $@ $<
 
 strife/%.wasm: strife/%.c
-	$(CC) $(CFLAGS) $(STRIFEFLAGS) -c -o $@ $<
+	$(EMCC) $(CFLAGS) $(STRIFEFLAGS) -c -o $@ $<
 
 clean:
 	rm -f $(DOOM).wasm $(DOOMOBJS)
