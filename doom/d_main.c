@@ -1963,7 +1963,6 @@ void D_DoomMain (void)
 	G_LoadGame(file);
     }
 	
-    DG_debug(DEBUG_INFO, "D_StartTitle");
     if (gameaction != ga_loadgame )
     {
 	if (autostart || netgame)
@@ -1974,6 +1973,5 @@ void D_DoomMain (void)
 
     DG_debug(DEBUG_INFO, "D_DoomLoop");
     D_DoomLoop ();  // never returns
-    DG_debug(DEBUG_INFO, "D_DoomLoop end");
 }
 

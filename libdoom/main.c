@@ -66,7 +66,7 @@ static void DG_Init(void) {
   first = 1;
   KeyQueueWriteIndex = 0;
   KeyQueueReadIndex = 0;
-  DG_ScreenBuffer = malloc(SCREENWIDTH * SCREENHEIGHT * 4);
+  DG_ScreenBuffer = malloc(SCREENWIDTH * 2 * SCREENHEIGHT * 2 * 4);
 }
 
 static void DG_Finish(void) {

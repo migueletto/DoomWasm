@@ -272,21 +272,25 @@ void I_FinishUpdate (void)
 {
   uint32_t *line_out;
   uint8_t *line_in;
-  uint32_t i, n;
+  uint32_t i, j, k, c;
 
   if (!initialized) return;
 
   line_in  = I_VideoBuffer;
   line_out = DG_GetScreenBuffer();
 
-  n = SCREENWIDTH * SCREENHEIGHT;
-  for (i = 0; i < n; i++) {
-    *line_out = colors[*line_in].c32;
-    line_in++;
-    line_out++;
+  for (i = 0, k = 0; i < SCREENHEIGHT; i++) {
+    for (j = 0; j < SCREENWIDTH; j++, k++) {
+      c = colors[*line_in].c32;
+      *line_out = c;
+      *(line_out + 1) = c;
+      *(line_out + SCREENWIDTH*2) = c;
+      *(line_out + SCREENWIDTH*2 + 1) = c;
+      line_in++;
+      line_out += 2;
+    }
+    line_out += SCREENWIDTH*2;
   }
-
-  //DG_DrawFrame();
 }
 
 //

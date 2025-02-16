@@ -3,8 +3,8 @@ const game = parameters.get('game');
 
 // memory shared between WASM and JavaScript
 var wasmMemory = new WebAssembly.Memory({
-  "initial": 512,
-  "maximum": 512
+  "initial": 768,
+  "maximum": 768
 });
 
 // ImageData requires a Uint8ClampedArray
