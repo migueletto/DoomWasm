@@ -1,5 +1,5 @@
 const parameters = new URLSearchParams(window.location.search);
-const game = parameters.get('game');
+const game = parameters.get('game') ?? 'doom';
 
 // memory shared between WASM and JavaScript
 var wasmMemory = new WebAssembly.Memory({
