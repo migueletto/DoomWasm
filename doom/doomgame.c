@@ -1,8 +1,6 @@
 #include <stdio.h>
 
 #include "game.h"
-#include "config0.h"
-#include "extra0.h"
 
 int gameVariants(void) {
   return 5;
@@ -39,9 +37,9 @@ char *gameMsgOn(void) {
 }
 
 char *gameConfig(int i) {
-  return config0;
+  return "";
 }
 
 char *gameExtraConfig(int i) {
-  return extra0;
+  return "";
 }
