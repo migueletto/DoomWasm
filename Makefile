@@ -32,8 +32,7 @@ STRIFESOURCE=strife/am_map.c strife/d_items.c strife/d_main.c strife/d_net.c str
 STRIFEOBJS=$(STRIFESOURCE:%.c=%.wasm)
 STRIFEFLAGS=-I./strife -DSTRIFE
 
-#LINKFLAGS=--no-entry -s INITIAL_MEMORY=33554432 -s IMPORTED_MEMORY -s EXPORTED_FUNCTIONS=_DoomInit,_DoomStep,_DoomKey,_DoomWadName,_DoomWadAlloc -s ERROR_ON_UNDEFINED_SYMBOLS=0
-LINKFLAGS=--no-entry -s INITIAL_MEMORY=50331648 -s IMPORTED_MEMORY -s EXPORTED_FUNCTIONS=_DoomInit,_DoomStep,_DoomKey,_DoomWadName,_DoomWadAlloc -s ERROR_ON_UNDEFINED_SYMBOLS=0
+LINKFLAGS=--no-entry -s INITIAL_MEMORY=67108864 -s IMPORTED_MEMORY -s EXPORTED_FUNCTIONS=_DoomInit,_DoomStep,_DoomKey,_DoomWadName,_DoomWadAlloc -s ERROR_ON_UNDEFINED_SYMBOLS=0
 
 $(DOOM).wasm: $(DOOMOBJS) libdoom/libdoom.a
 	$(EMCC) -o $@ $(LINKFLAGS) $(DOOMOBJS) libdoom/libdoom.a
