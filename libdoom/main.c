@@ -25,6 +25,7 @@ struct dg_dir_t {
   int fd;
 };
 
+static int finish;
 static int first;
 static uint64_t t0;
 static int width, height;
@@ -38,7 +39,7 @@ static uint32_t KeyQueueReadIndex;
 
 static uint32_t *DG_ScreenBuffer;
 
-static dg_file_t config0, extra0, wad;
+static dg_file_t config0, extra0, wad, aux;
 
 extern void D_DoomMain(void);
 extern void D_RunFrame(void);
@@ -63,6 +64,7 @@ static int64_t gettime(void) {
 
 static void DG_Init(void) {
   t0 = gettime();
+  finish = 0;
   first = 1;
   KeyQueueWriteIndex = 0;
   KeyQueueReadIndex = 0;
@@ -154,6 +156,7 @@ void DG_SetWindowTitle(const char *_title) {
 
 void DG_Fatal(const char *filename, const char *function, int lineNo, char *msg) {
   DG_debug(1 ,"DG_Fatal(\"%s\", \"%s\", %d, \"%s\")", filename, function, lineNo, msg);
+  finish = 1;
 }
 
 int DG_create(char *name) {
@@ -189,6 +192,15 @@ dg_file_t *DG_open(char *name, int wr) {
     wad.pos = 0;
     DG_debug(1, "returning internal %s", name);
     return &wad;
+  }
+
+  if (wr) {
+    aux.name = strdup(name);
+    aux.buffer = NULL;
+    aux.size = 0;
+    aux.pos = 0;
+    DG_debug(1, "returning fake %s", name);
+    return &aux;
   }
 
   return NULL;
@@ -231,7 +243,7 @@ int DG_read(dg_file_t *f, void *buf, int n) {
 }
 
 int DG_write(dg_file_t *f, void *buf, int n) {
-  return -1;
+  return n;
 }
 
 int DG_seek(dg_file_t *f, int offset) {
@@ -269,17 +281,17 @@ int DG_filesize(dg_file_t *f) {
 
 int DG_mkdir(char *name) {
   DG_debug(1 ,"DG_mkdir(\"%s\")", name);
-  return -1;
+  return 0;
 }
 
 int DG_remove(char *name) {
   DG_debug(1 ,"DG_remove(\"%s\")", name);
-  return -1;
+  return 0;
 }
 
 int DG_rename(char *oldname, char *newname) {
   DG_debug(1 ,"DG_rename(\"%s\", \"%s\")", oldname, newname);
-  return -1;
+  return 0;
 }
 
 int DG_printf(dg_file_t *f, const char *fmt, ...) {
@@ -409,12 +421,25 @@ void *DoomWadAlloc(int len) {
   return wad.buffer;
 }
 
+static void mtest(void) {
+  char *p = malloc(32);
+  strcpy(p, "mtest");
+  DG_debug(1, "%s", p);
+  free(p);
+}
+
 void *DoomStep(void) {
   if (first) {
     setIntVariable(gameMsgOn(), 0);
     setIntVariable("usegamma", 3);
     setPalette();
+    mtest();
     first = 0;
+  }
+
+  if (finish) {
+    DG_debug(1, "last step");
+    return NULL;
   }
 
   D_RunFrame();

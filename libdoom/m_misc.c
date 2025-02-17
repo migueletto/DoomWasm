@@ -201,7 +201,7 @@ int M_ReadFile(const char *name, byte **buffer) {
 char *M_TempFile(const char *s)
 {
     const char *tempdir;
-    tempdir = "/";
+    tempdir = "/tmp";
     return M_StringJoin(tempdir, DIR_SEPARATOR_S, s, NULL);
 }
 
