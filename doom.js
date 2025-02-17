@@ -3,8 +3,8 @@ const game = parameters.get('game') ?? 'doom';
 
 // memory shared between WASM and JavaScript
 var wasmMemory = new WebAssembly.Memory({
-  "initial": 768,
-  "maximum": 768
+  "initial": 1024,
+  "maximum": 1024
 });
 
 // ImageData requires a Uint8ClampedArray
@@ -38,6 +38,10 @@ function draw(ts) {
   if ((ts - last_ts) > 100.0) {
     // call WASM doomStep() function
     const addr = doomStep();
+    if (addr == 0) {
+      console.log("aborting");
+      return;
+    }
 
     // the returned value is the image buffer address
     // put the buffer inside an array slice
