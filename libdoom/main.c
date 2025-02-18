@@ -431,7 +431,7 @@ static void mtest(void) {
 void *DoomStep(void) {
   if (first) {
     setIntVariable(gameMsgOn(), 0);
-    setIntVariable("usegamma", 3);
+    setIntVariable("usegamma", 1);
     setPalette();
     mtest();
     first = 0;
