@@ -99,7 +99,7 @@ var env = {
 
 // download and run the WASM code for the selected game
 WebAssembly.instantiateStreaming(
-    fetch(game + '.wasm'),
+    fetch('/' + game + '.wasm'),
     { env: env, wasi_snapshot_preview1: env }
   ).then(obj => {
 
