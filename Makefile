@@ -34,16 +34,18 @@ STRIFEFLAGS=-I./strife -DSTRIFE
 
 LINKFLAGS=--no-entry -s INITIAL_MEMORY=67108864 -s IMPORTED_MEMORY -s EXPORTED_FUNCTIONS=_DoomInit,_DoomStep,_DoomKey,_DoomWadName,_DoomWadAlloc -s ERROR_ON_UNDEFINED_SYMBOLS=0
 
-$(DOOM).wasm: $(DOOMOBJS) libdoom/libdoom.a
+all: web/$(DOOM).wasm web/$(HERETIC).wasm web/$(HEXEN).wasm web/$(STRIFE).wasm
+
+web/$(DOOM).wasm: $(DOOMOBJS) libdoom/libdoom.a
 	$(EMCC) -o $@ $(LINKFLAGS) $(DOOMOBJS) libdoom/libdoom.a
 
-$(HERETIC).wasm: $(HERETICOBJS) libdoom/libdoom.a
+web/$(HERETIC).wasm: $(HERETICOBJS) libdoom/libdoom.a
 	$(EMCC) -o $@ $(LINKFLAGS) $(HERETICOBJS) libdoom/libdoom.a
 
-$(HEXEN).wasm: $(HEXENOBJS) libdoom/libdoom.a
+web/$(HEXEN).wasm: $(HEXENOBJS) libdoom/libdoom.a
 	$(EMCC) -o $@ $(LINKFLAGS) $(HEXENOBJS) libdoom/libdoom.a
 
-$(STRIFE).wasm: $(STRIFEOBJS) libdoom/libdoom.a
+web/$(STRIFE).wasm: $(STRIFEOBJS) libdoom/libdoom.a
 	$(EMCC) -o $@ $(LINKFLAGS) $(STRIFEOBJS) libdoom/libdoom.a
 
 libdoom/libdoom.a: $(LIBOBJS)
@@ -65,8 +67,8 @@ strife/%.wasm: strife/%.c
 	$(EMCC) $(CFLAGS) $(STRIFEFLAGS) -c -o $@ $<
 
 clean:
-	rm -f $(DOOM).wasm $(DOOMOBJS)
-	rm -f $(HERETIC).wasm $(HERETICOBJS)
-	rm -f $(HEXEN).wasm $(HEXENOBJS)
-	rm -f $(STRIFE).wasm $(STRIFEOBJS)
+	rm -f web/$(DOOM).wasm $(DOOMOBJS)
+	rm -f web/$(HERETIC).wasm $(HERETICOBJS)
+	rm -f web/$(HEXEN).wasm $(HEXENOBJS)
+	rm -f web/$(STRIFE).wasm $(STRIFEOBJS)
 	rm -f $(LIBOBJS) libdoom/libdoom.a

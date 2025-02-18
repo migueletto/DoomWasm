@@ -1,3 +1,4 @@
+// check which game we should run
 const parameters = new URLSearchParams(window.location.search);
 const game = parameters.get('game') ?? 'doom';
 
@@ -38,10 +39,9 @@ function draw(ts) {
   if ((ts - last_ts) > 100.0) {
     // call WASM doomStep() function
     const addr = doomStep();
-    if (addr == 0) {
-      console.log("aborting");
-      return;
-    }
+
+    // abort if doomStep returns NULL
+    if (addr == 0) return;
 
     // the returned value is the image buffer address
     // put the buffer inside an array slice
@@ -60,20 +60,25 @@ function draw(ts) {
   requestAnimationFrame(draw);
 }
 
+// functions the Emscripten declares as imports, although
+// the code does not use them
 function _fd_write() {}
 function _fd_close() {}
 function _fd_seek() {}
 function _clock_time_get() {}
 function _proc_exit() {}
 
+// returns current time
 function _get_now(tp) {
   var now = performance.now();
   HEAP32[tp >> 2] = now / 1e3 | 0;
   HEAP32[tp + 4 >> 2] = now % 1e3 * 1e3 * 1e3 | 0;
 }
 
+// string decoder
 var decoder = new TextDecoder("utf-8");
 
+// logs a string to the console
 function _console_log(addr) {
   for (i = 0; HEAPU8[addr + i] != 0; i++);
   const buffer = HEAPU8.slice(addr, addr + i);
@@ -92,18 +97,19 @@ var env = {
   "console_log": _console_log,
 }
 
-// load and run the WASM code in "doom.wasm"
+// download and run the WASM code for the selected game
 WebAssembly.instantiateStreaming(
     fetch(game + '.wasm'),
     { env: env, wasi_snapshot_preview1: env }
   ).then(obj => {
 
+    // gets the WAD file name from the game
     const addr = obj.instance.exports.DoomWadName();
     for (i = 0; HEAPU8[addr + i] != 0; i++);
     const buffer = HEAPU8.slice(addr, addr + i);
     const wadName = decoder.decode(buffer);
 
-    // fetch the WAD file
+    // download the WAD file
     fetch(wadName)
       .then(res  => res.arrayBuffer())
       .then(data => {
