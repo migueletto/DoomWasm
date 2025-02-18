@@ -29,6 +29,6 @@ http://localhost:8000/doom.html?game=heretic
 http://localhost:8000/doom.html?game=hexen  
 http://localhost:8000/doom.html?game=strife  
 
-Controls are arrow keys for movement, Control to fire, and ENTER and ESC like stamdard Doom.
+Controls are arrow keys for movement, Control to fire, and ENTER and ESC like standard Doom.
 Like I said, this is a proof of concept. The script doom.js has minimal error checking, so things may break easily.
-There are some debug output to the browser console, if you are interested.
+There is some debug output to the browser console, if you are interested.
