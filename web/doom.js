@@ -1,6 +1,8 @@
 // check which game we should run
 const parameters = new URLSearchParams(window.location.search);
-const game = parameters.get('game') ?? 'doom';
+var game = parameters.get('game') ?? 'doom';
+if (!/^[a-z]+$/.test(game)) game = 'doom';
+console.log('trying game ' + game);
 
 // memory shared between WASM and JavaScript
 var wasmMemory = new WebAssembly.Memory({
@@ -20,6 +22,7 @@ var last_ts = 0;
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
+// add keydown/keyup event listeners to canva's parent div
 const display = document.getElementById("display");
 display.addEventListener('keydown', function(e) {
   doomKey(1, e.keyCode);
