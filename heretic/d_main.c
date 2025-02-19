@@ -252,7 +252,7 @@ void D_DoomLoop(void)
     main_loop_started = true;
 }
 
-void D_RunFrame(void) {
+int D_RunFrame(void) {
   // Frame syncronous IO operations
   I_StartFrame();
 
@@ -263,6 +263,8 @@ void D_RunFrame(void) {
   // Move positional sounds
   S_UpdateSounds(players[consoleplayer].mo);
   D_Display();
+
+  return finish;
 }
 
 /*

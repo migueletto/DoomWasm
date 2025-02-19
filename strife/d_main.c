@@ -554,7 +554,7 @@ void D_DoomLoop (void)
     }
 }
 
-void D_RunFrame() {
+int D_RunFrame() {
   // frame syncronous IO operations
   I_StartFrame (); 
 
@@ -566,6 +566,8 @@ void D_RunFrame() {
   // Update display, next frame, with current state.
   if (screenvisible)
     D_Display ();
+
+  return finish;
 }
 
 

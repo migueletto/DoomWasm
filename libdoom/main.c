@@ -12,8 +12,6 @@
 #include "game.h"
 #include "host.h"
 
-#define ROOT "/"
-
 struct dg_file_t {
   char *name;
   uint8_t *buffer;
@@ -27,6 +25,7 @@ struct dg_dir_t {
 
 static int finish;
 static int first;
+static int variant;
 static uint64_t t0;
 static int width, height;
 static char *argv[16];
@@ -42,7 +41,7 @@ static uint32_t *DG_ScreenBuffer;
 static dg_file_t config0, extra0, wad, aux;
 
 extern void D_DoomMain(void);
-extern void D_RunFrame(void);
+extern int D_RunFrame(void);
 
 extern void console_log(char *buf);
 extern void get_now(struct timespec *tp);
@@ -66,6 +65,7 @@ static void DG_Init(void) {
   t0 = gettime();
   finish = 0;
   first = 1;
+  variant = 0;
   KeyQueueWriteIndex = 0;
   KeyQueueReadIndex = 0;
   DG_ScreenBuffer = malloc(SCREENWIDTH * 2 * SCREENHEIGHT * 2 * 4);
@@ -114,19 +114,6 @@ static void setIntVariable(char *name, int n) {
   M_SetVariable(name, value);
 }
 
-/*
-static char *getGameRoot(char *name) {
-  char *rootdir;
-  int len;
-
-  len = strlen(ROOT) + strlen(name) + 1;
-  rootdir = malloc(len);
-  snprintf(rootdir, len, "%s%s", ROOT, name);
-
-  return rootdir;
-}
-*/
-
 int DG_SleepMs(uint32_t ms) {
   //DG_debug(1, "DG_SleepMs %d", ms);
   //usleep(ms * 1000);
@@ -171,7 +158,7 @@ dg_file_t *DG_open(char *name, int wr) {
 
   if (!strcmp(name, "config0.cfg")) {
     config0.name = strdup(name);
-    config0.buffer = (uint8_t *)gameConfig(0);
+    config0.buffer = (uint8_t *)gameConfig(variant);
     config0.size = strlen((char *)config0.buffer);
     config0.pos = 0;
     DG_debug(1, "returning internal %s", name);
@@ -180,14 +167,14 @@ dg_file_t *DG_open(char *name, int wr) {
 
   if (!strcmp(name, "extra0.cfg")) {
     extra0.name = strdup(name);
-    extra0.buffer = (uint8_t *)gameExtraConfig(0);
+    extra0.buffer = (uint8_t *)gameExtraConfig(variant);
     extra0.size = strlen((char *)extra0.buffer);
     extra0.pos = 0;
     DG_debug(1, "returning internal %s", name);
     return &extra0;
   }
 
-  if (!strcmp(name, gameWad(0))) {
+  if (!strcmp(name, gameWad(variant))) {
     wad.name = strdup(name);
     wad.pos = 0;
     DG_debug(1, "returning internal %s", name);
@@ -392,13 +379,13 @@ void DoomInit(void) {
   myargc = 0;
   argv[myargc++] = gameName();
   argv[myargc++] = "-iwad";
-  argv[myargc++] = gameWad(0);
+  argv[myargc++] = gameWad(variant);
   argv[myargc++] = "-config";
-  argv[myargc++] = "config0.cfg";
+  argv[myargc++] = "config.cfg";
   argv[myargc++] = "-extraconfig";
-  argv[myargc++] = "extra0.cfg";
+  argv[myargc++] = "extra.cfg";
   argv[myargc++] = "-savedir";
-  argv[myargc++] = "savedir0";
+  argv[myargc++] = "savedir";
   argv[myargc] = NULL;
   myargv = argv;
 
@@ -410,8 +397,10 @@ void DoomInit(void) {
   DG_Finish();
 }
 
-char *DoomWadName(void) {
-  return gameWad(0);
+char *DoomWadName(int _variant) {
+  variant = _variant;
+  if (variant < 0 || variant >= gameVariants()) variant = 0;
+  return gameWad(variant);
 }
 
 void *DoomWadAlloc(int len) {
@@ -437,11 +426,12 @@ void *DoomStep(void) {
     first = 0;
   }
 
+  finish = D_RunFrame();
+
   if (finish) {
     DG_debug(1, "last step");
     return NULL;
   }
 
-  D_RunFrame();
   return DG_ScreenBuffer;
 }

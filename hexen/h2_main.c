@@ -505,7 +505,7 @@ void D_DoomMain(void)
     // Show version message now, so it's visible during R_Init()
     ST_Message("R_Init: Init Hexen refresh daemon");
     R_Init();
-    ST_Message("\n");
+    //ST_Message("\n");
 
     //if (M_CheckParm("-net"))
     //    ST_NetProgress();       // Console player found
@@ -813,7 +813,7 @@ void H2_GameLoop(void)
     I_SetPalette(W_CacheLumpName("PLAYPAL", PU_CACHE));
 }
 
-void D_RunFrame(void) {
+int D_RunFrame(void) {
   // Frame syncronous IO operations
   I_StartFrame();
 
@@ -825,6 +825,8 @@ void D_RunFrame(void) {
   //S_UpdateSounds(players[displayplayer].mo);
 
   DrawAndBlit();
+
+  return finish;
 }
 
 //==========================================================================

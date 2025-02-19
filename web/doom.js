@@ -1,17 +1,19 @@
-// check which game we should run
+// check which game and variant we should run
 const parameters = new URLSearchParams(window.location.search);
 var game = parameters.get('game') ?? 'doom';
 if (!/^[a-z]+$/.test(game)) game = 'doom';
-console.log('trying game ' + game);
+gameWasm = '/' + game + '.wasm';
+var variant = parameters.get('variant') ?? '0';
+if (!/^[0-9]$/.test(variant)) variant = '0';
 
-// memory shared between WASM and JavaScript
+// memory shared between WASM and JavaScript (1024*64K = 64M)
 var wasmMemory = new WebAssembly.Memory({
-  "initial": 1024,
-  "maximum": 1024
+  'initial': 1024,
+  'maximum': 1024
 });
 
 // ImageData requires a Uint8ClampedArray
-HEAP = new Uint8ClampedArray(wasmMemory.buffer);
+HEAPC8 = new Uint8ClampedArray(wasmMemory.buffer);
 HEAPU8 = new Uint8Array(wasmMemory.buffer);
 HEAP32 = new Int32Array(wasmMemory.buffer);
 
@@ -19,11 +21,12 @@ var doomStep, doomKey;
 var last_ts = 0;
 
 // retrieve the context to draw on the HTML canvas
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+ctx.font = "18px monospace";
 
-// add keydown/keyup event listeners to canva's parent div
-const display = document.getElementById("display");
+// add keydown/keyup event listeners to canvas' parent div
+const display = document.getElementById('display');
 display.addEventListener('keydown', function(e) {
   doomKey(1, e.keyCode);
   return false;
@@ -44,11 +47,14 @@ function draw(ts) {
     const addr = doomStep();
 
     // abort if doomStep returns NULL
-    if (addr == 0) return;
+    if (addr == 0) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      return;
+    }
 
     // the returned value is the image buffer address
     // put the buffer inside an array slice
-    const buffer = HEAP.slice(addr, addr + len);
+    const buffer = HEAPC8.slice(addr, addr + len);
 
     // update the image data with the buffer contents
     image.data.set(buffer);
@@ -79,7 +85,7 @@ function _get_now(tp) {
 }
 
 // string decoder
-var decoder = new TextDecoder("utf-8");
+var decoder = new TextDecoder('utf-8');
 
 // logs a string to the console
 function _console_log(addr) {
@@ -88,51 +94,71 @@ function _console_log(addr) {
   console.log(decoder.decode(buffer));
 }
 
+// draws an error messages on the canvas
+function downloadError(name) {
+  const msg = 'Error: could not load ' + name;
+  console.log(msg);
+  ctx.fillText(msg, 0, 18);
+}
+
+function download(filename, action) {
+  // download the WAD file
+  fetch(filename).then(res => {
+    if (res.ok) return res.arrayBuffer();
+    // throw exception if download failed
+    throw new Error();
+
+  }).then(data => {
+    const array = new Uint8Array(data);
+    action(array);
+
+  }).catch(error => {
+    downloadError(filename);
+  });
+}
+
 // the environment for the WASM runtime
 var env = {
-  "memory": wasmMemory,
-  "fd_write": _fd_write,
-  "fd_close": _fd_close,
-  "fd_seek": _fd_seek,
-  "clock_time_get": _clock_time_get,
-  "proc_exit": _proc_exit,
-  "get_now": _get_now,
-  "console_log": _console_log,
+  'memory': wasmMemory,
+  'fd_write': _fd_write,
+  'fd_close': _fd_close,
+  'fd_seek': _fd_seek,
+  'clock_time_get': _clock_time_get,
+  'proc_exit': _proc_exit,
+  'get_now': _get_now,
+  'console_log': _console_log,
 }
 
 // download and run the WASM code for the selected game
 WebAssembly.instantiateStreaming(
-    fetch('/' + game + '.wasm'),
-    { env: env, wasi_snapshot_preview1: env }
-  ).then(obj => {
+  fetch(gameWasm),
+  { env: env, wasi_snapshot_preview1: env }
 
-    // gets the WAD file name from the game
-    const addr = obj.instance.exports.DoomWadName();
-    for (i = 0; HEAPU8[addr + i] != 0; i++);
-    const buffer = HEAPU8.slice(addr, addr + i);
-    const wadName = decoder.decode(buffer);
+).then(obj => {
+  // gets the WAD file name from the game and variant
+  const addr = obj.instance.exports.DoomWadName(variant);
+  for (i = 0; HEAPU8[addr + i] != 0; i++);
+  const buffer = HEAPU8.slice(addr, addr + i);
+  const wadName = decoder.decode(buffer);
 
-    // download the WAD file
-    fetch(wadName)
-      .then(res  => res.arrayBuffer())
-      .then(data => {
-        // create Uint8 data view
-        const wad = new Uint8Array(data);
-        // copy the WAD to WASM memory
-        const addr = obj.instance.exports.DoomWadAlloc(wad.byteLength);
-        for (i = 0; i < wad.byteLength; i++) {
-          HEAPU8[addr + i] = wad[i];
-        }
+  // download the WAD
+  download(wadName, function(wad) {
+    // copy the WAD to WASM memory
+    const addr = obj.instance.exports.DoomWadAlloc(wad.byteLength);
+    for (i = 0; i < wad.byteLength; i++) {
+      HEAPU8[addr + i] = wad[i];
+    }
 
-        // call WASM init() function once
-        obj.instance.exports.DoomInit();
+    // call WASM DoomInit() function once
+    obj.instance.exports.DoomInit();
 
-        // save WASM functions to be called later
-        doomStep = obj.instance.exports.DoomStep;
-        doomKey = obj.instance.exports.DoomKey;
+    // save WASM functions to be called later
+    doomStep = obj.instance.exports.DoomStep;
+    doomKey = obj.instance.exports.DoomKey;
 
-        // request to call JavaScript draw() function on the next frame
-        requestAnimationFrame(draw);
-      })
-  }
-);
+    // request to call JavaScript draw() function on the next frame
+    requestAnimationFrame(draw);
+  });
+}).catch(error => {
+  downloadError(gameWasm);
+});

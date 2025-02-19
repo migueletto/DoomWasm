@@ -414,7 +414,7 @@ boolean D_GrabMouseCallback(void)
 //
 //  D_RunFrame
 //
-void D_RunFrame()
+int D_RunFrame()
 {
     int nowtime;
     int tics;
@@ -436,7 +436,7 @@ void D_RunFrame()
         I_UpdateNoBlit ();
         M_Drawer ();                            // menu is drawn even on top of wipes
         I_FinishUpdate ();                      // page flip or blit buffer
-        return;
+        return finish;
     }
 
     // frame syncronous IO operations
@@ -460,6 +460,8 @@ void D_RunFrame()
             I_FinishUpdate ();              // page flip or blit buffer
         }
     }
+
+    return finish;
 }
 
 //
