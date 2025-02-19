@@ -12,7 +12,7 @@ Supported Doom variants:
 4: TNT.WAD (TNT Evilution)  
 
 Supported Heretic variants:  
-0: HERETIC1.WAD: Heretic (shareware version)
+0: HERETIC1.WAD: Heretic (shareware version)  
 1: HERETIC.WAD: Heretic (registered version)
 
 Supported Hexen variant:  

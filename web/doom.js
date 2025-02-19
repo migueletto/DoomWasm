@@ -1,10 +1,13 @@
 // check which game and variant we should run
 const parameters = new URLSearchParams(window.location.search);
 var game = parameters.get('game') ?? 'doom';
-if (!/^[a-z]+$/.test(game)) game = 'doom';
-gameWasm = '/' + game + '.wasm';
 var variant = parameters.get('variant') ?? '0';
+var extra = parameters.get('extra');
+if (!/^[a-z]+$/.test(game)) game = 'doom';
 if (!/^[0-9]$/.test(variant)) variant = '0';
+if (extra && !/^[A-Za-z0-9_]+$/.test(extra)) extra = null;
+gameWasm = game + '.wasm';
+if (extra) extraWadName = extra + '.wad';
 
 // memory shared between WASM and JavaScript (1024*64K = 64M)
 var wasmMemory = new WebAssembly.Memory({
@@ -17,7 +20,7 @@ HEAPC8 = new Uint8ClampedArray(wasmMemory.buffer);
 HEAPU8 = new Uint8Array(wasmMemory.buffer);
 HEAP32 = new Int32Array(wasmMemory.buffer);
 
-var doomStep, doomKey;
+var doomAlloc, doomInit, doomStep, doomKey;
 var last_ts = 0;
 
 // retrieve the context to draw on the HTML canvas
@@ -69,6 +72,14 @@ function draw(ts) {
   requestAnimationFrame(draw);
 }
 
+function runGame() {
+  // call WASM DoomInit() function once
+  doomInit();
+
+  // request to call JavaScript draw() function on the next frame
+  requestAnimationFrame(draw);
+}
+
 // functions the Emscripten declares as imports, although
 // the code does not use them
 function _fd_write() {}
@@ -102,7 +113,7 @@ function downloadError(name) {
 }
 
 function download(filename, action) {
-  // download the WAD file
+  // download the file
   fetch(filename).then(res => {
     if (res.ok) return res.arrayBuffer();
     // throw exception if download failed
@@ -110,7 +121,14 @@ function download(filename, action) {
 
   }).then(data => {
     const array = new Uint8Array(data);
-    action(array);
+
+    // copy the file bytes to WASM memory
+    const addr = doomAlloc(array.byteLength);
+    for (i = 0; i < array.byteLength; i++) {
+      HEAPU8[addr + i] = array[i];
+    }
+
+    action();
 
   }).catch(error => {
     downloadError(filename);
@@ -135,29 +153,26 @@ WebAssembly.instantiateStreaming(
   { env: env, wasi_snapshot_preview1: env }
 
 ).then(obj => {
+  // save WASM functions to be called later
+  doomAlloc = obj.instance.exports.DoomWadAlloc;
+  doomInit = obj.instance.exports.DoomInit;
+  doomStep = obj.instance.exports.DoomStep;
+  doomKey = obj.instance.exports.DoomKey;
+
   // gets the WAD file name from the game and variant
   const addr = obj.instance.exports.DoomWadName(variant);
   for (i = 0; HEAPU8[addr + i] != 0; i++);
   const buffer = HEAPU8.slice(addr, addr + i);
   const wadName = decoder.decode(buffer);
 
-  // download the WAD
-  download(wadName, function(wad) {
-    // copy the WAD to WASM memory
-    const addr = obj.instance.exports.DoomWadAlloc(wad.byteLength);
-    for (i = 0; i < wad.byteLength; i++) {
-      HEAPU8[addr + i] = wad[i];
+  // download main WAD
+  download(wadName, function() {
+    if (typeof extraWadName !== 'undefined') {
+      // download extra WAD (if specified)
+      download(extraWadName, runGame);
+    } else {
+      runGame();
     }
-
-    // call WASM DoomInit() function once
-    obj.instance.exports.DoomInit();
-
-    // save WASM functions to be called later
-    doomStep = obj.instance.exports.DoomStep;
-    doomKey = obj.instance.exports.DoomKey;
-
-    // request to call JavaScript draw() function on the next frame
-    requestAnimationFrame(draw);
   });
 }).catch(error => {
   downloadError(gameWasm);

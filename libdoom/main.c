@@ -13,7 +13,6 @@
 #include "host.h"
 
 struct dg_file_t {
-  char *name;
   uint8_t *buffer;
   uint32_t size;
   uint32_t pos;
@@ -23,11 +22,11 @@ struct dg_dir_t {
   int fd;
 };
 
-static int finish;
-static int first;
-static int variant;
-static uint64_t t0;
+static int first = 1;
+static int finish = 0;
+static int variant = 0;
 static int width, height;
+static uint64_t t0;
 static char *argv[16];
 
 #define KEYQUEUE_SIZE 16
@@ -38,7 +37,7 @@ static uint32_t KeyQueueReadIndex;
 
 static uint32_t *DG_ScreenBuffer;
 
-static dg_file_t config0, extra0, wad, aux;
+static dg_file_t config, extra, wad = {0}, extraWad = {0}, aux;
 
 extern void D_DoomMain(void);
 extern int D_RunFrame(void);
@@ -63,9 +62,6 @@ static int64_t gettime(void) {
 
 static void DG_Init(void) {
   t0 = gettime();
-  finish = 0;
-  first = 1;
-  variant = 0;
   KeyQueueWriteIndex = 0;
   KeyQueueReadIndex = 0;
   DG_ScreenBuffer = malloc(SCREENWIDTH * 2 * SCREENHEIGHT * 2 * 4);
@@ -156,33 +152,35 @@ dg_file_t *DG_open(char *name, int wr) {
 
   DG_debug(1, "DG_open(\"%s\", %d)", name, wr);
 
-  if (!strcmp(name, "config0.cfg")) {
-    config0.name = strdup(name);
-    config0.buffer = (uint8_t *)gameConfig(variant);
-    config0.size = strlen((char *)config0.buffer);
-    config0.pos = 0;
+  if (!strcmp(name, "config.cfg")) {
+    config.buffer = (uint8_t *)gameConfig(variant);
+    config.size = strlen((char *)config.buffer);
+    config.pos = 0;
     DG_debug(1, "returning internal %s", name);
-    return &config0;
+    return &config;
   }
 
-  if (!strcmp(name, "extra0.cfg")) {
-    extra0.name = strdup(name);
-    extra0.buffer = (uint8_t *)gameExtraConfig(variant);
-    extra0.size = strlen((char *)extra0.buffer);
-    extra0.pos = 0;
+  if (!strcmp(name, "extra.cfg")) {
+    extra.buffer = (uint8_t *)gameExtraConfig(variant);
+    extra.size = strlen((char *)extra.buffer);
+    extra.pos = 0;
     DG_debug(1, "returning internal %s", name);
-    return &extra0;
+    return &extra;
   }
 
   if (!strcmp(name, gameWad(variant))) {
-    wad.name = strdup(name);
     wad.pos = 0;
-    DG_debug(1, "returning internal %s", name);
+    DG_debug(1, "returning internal %s (%d bytes)", name, wad.size);
     return &wad;
   }
 
+  if (extraWad.buffer && !strcmp(name, "extra.wad")) {
+    extraWad.pos = 0;
+    DG_debug(1, "returning internal %s (%d bytes)", name, extraWad.size);
+    return &extraWad;
+  }
+
   if (wr) {
-    aux.name = strdup(name);
     aux.buffer = NULL;
     aux.size = 0;
     aux.pos = 0;
@@ -195,8 +193,7 @@ dg_file_t *DG_open(char *name, int wr) {
 
 void DG_close(dg_file_t *f) {
   if (f) {
-    DG_debug(1, "DG_close \"%s\")", f->name);
-    free(f->name);
+    DG_debug(1, "DG_close");
     f->pos = 0;
   }
 }
@@ -380,6 +377,10 @@ void DoomInit(void) {
   argv[myargc++] = gameName();
   argv[myargc++] = "-iwad";
   argv[myargc++] = gameWad(variant);
+  if (extraWad.buffer) {
+    argv[myargc++] = "-file";
+    argv[myargc++] = "extra.wad";
+  }
   argv[myargc++] = "-config";
   argv[myargc++] = "config.cfg";
   argv[myargc++] = "-extraconfig";
@@ -404,10 +405,15 @@ char *DoomWadName(int _variant) {
 }
 
 void *DoomWadAlloc(int len) {
-  DG_debug(1, "allocatind %d bytes for WAD", len);
-  wad.buffer = malloc(len);
-  wad.size = len;
-  return wad.buffer;
+  if (wad.buffer == NULL) {
+    wad.buffer = malloc(len);
+    wad.size = len;
+    return wad.buffer;
+  }
+
+  extraWad.buffer = malloc(len);
+  extraWad.size = len;
+  return extraWad.buffer;
 }
 
 static void mtest(void) {
