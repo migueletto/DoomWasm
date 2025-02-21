@@ -821,7 +821,7 @@ static boolean SCLoadGame(int option)
 
     filename = SV_Filename(option);
     G_LoadGame(filename);
-    free(filename);
+    myfree(filename);
 
     MN_DeactivateMenu();
     BorderNeedRefresh = true;

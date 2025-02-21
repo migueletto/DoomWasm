@@ -33,6 +33,8 @@
 #include "m_misc.h"
 #include "r_state.h"
 
+#include "host.h"
+
 dg_file_t *save_stream;
 int savegamelength;
 boolean savegame_error;
@@ -64,7 +66,7 @@ char *P_SaveGameFile(int slot)
     if (filename == NULL)
     {
         filename_size = strlen(savegamedir) + 32;
-        filename = malloc(filename_size);
+        filename = mymalloc(filename_size);
     }
 
     DEH_snprintf(basename, 32, SAVEGAMENAME "%d.dsg", slot);

@@ -10,7 +10,7 @@ TEXTSOURCE=libdoom/txt_desktop.c libdoom/txt_gui.c libdoom/txt_io.c libdoom/txt_
 TEXTOBJS=$(TEXTSOURCE:%.c=%.wasm)
 
 LIBOBJS=$(GENOBJS) $(TEXTOBJS)
-CFLAGS=-O2 -I. -I./libdoom
+CFLAGS=-O2 -I. -I./libdoom -Wall
 
 DOOM=doom
 DOOMSOURCE=doom/am_map.c doom/d_items.c doom/d_main.c doom/d_net.c doom/doomdef.c doom/doomstat.c doom/dstrings.c doom/f_finale.c doom/f_wipe.c doom/g_game.c doom/hu_lib.c doom/hu_stuff.c doom/info.c doom/m_menu.c doom/m_random.c doom/p_ceilng.c doom/p_doors.c doom/p_enemy.c doom/p_floor.c doom/p_inter.c doom/p_lights.c doom/p_map.c doom/p_maputl.c doom/p_mobj.c doom/p_plats.c doom/p_pspr.c doom/p_saveg.c doom/p_setup.c doom/p_sight.c doom/p_spec.c doom/p_switch.c doom/p_telept.c doom/p_tick.c doom/p_user.c doom/r_bsp.c doom/r_data.c doom/r_draw.c doom/r_main.c doom/r_plane.c doom/r_segs.c doom/r_sky.c doom/r_things.c doom/s_sound.c doom/sounds.c doom/st_lib.c doom/st_stuff.c doom/wi_stuff.c doom/deh_ammo.c doom/deh_bexstr.c doom/deh_cheat.c doom/deh_doom.c doom/deh_frame.c doom/deh_misc.c doom/deh_ptr.c doom/deh_sound.c doom/deh_thing.c doom/deh_weapon.c doom/doomgame.c
@@ -32,7 +32,7 @@ STRIFESOURCE=strife/am_map.c strife/d_items.c strife/d_main.c strife/d_net.c str
 STRIFEOBJS=$(STRIFESOURCE:%.c=%.wasm)
 STRIFEFLAGS=-I./strife -DSTRIFE
 
-LINKFLAGS=--no-entry -s INITIAL_MEMORY=67108864 -s IMPORTED_MEMORY -s EXPORTED_FUNCTIONS=_DoomInit,_DoomStep,_DoomKey,_DoomWadName,_DoomWadAlloc -s ERROR_ON_UNDEFINED_SYMBOLS=0
+LINKFLAGS=--no-entry -s INITIAL_MEMORY=67108864 -s IMPORTED_MEMORY -s EXPORTED_FUNCTIONS=_DoomInit,_DoomStep,_DoomKey,_DoomWadName,_DoomWadAlloc -s ERROR_ON_UNDEFINED_SYMBOLS=0 -s SAFE_HEAP=1
 
 all: web/$(DOOM).wasm web/$(HERETIC).wasm web/$(HEXEN).wasm web/$(STRIFE).wasm
 

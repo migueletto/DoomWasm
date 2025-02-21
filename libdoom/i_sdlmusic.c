@@ -71,7 +71,7 @@ static boolean WriteWrapperTimidityConfig(char *write_path)
 
     path = M_DirName(timidity_cfg_path);
     fprintf(fstream, "dir %s\n", path);
-    free(path);
+    myfree(path);
 
     fprintf(fstream, "source %s\n", timidity_cfg_path);
     fclose(fstream);
@@ -117,7 +117,7 @@ void I_InitTimidityConfig(void)
     }
     else
     {
-        free(temp_timidity_cfg);
+        myfree(temp_timidity_cfg);
         temp_timidity_cfg = NULL;
     }
 }
@@ -146,7 +146,7 @@ static void RemoveTimidityConfig(void)
     if (temp_timidity_cfg != NULL)
     {
         M_remove(temp_timidity_cfg);
-        free(temp_timidity_cfg);
+        myfree(temp_timidity_cfg);
     }
 }
 
@@ -414,7 +414,7 @@ static void *I_SDL_RegisterSong(void *data, int len)
         M_remove(filename);
     }
 
-    free(filename);
+    myfree(filename);
 
     return music;
 }

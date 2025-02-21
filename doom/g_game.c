@@ -73,6 +73,7 @@
 
 
 #include "g_game.h"
+#include "host.h"
 
 
 #define SAVEGAMESIZE	0x2c000

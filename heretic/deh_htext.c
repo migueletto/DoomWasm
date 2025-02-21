@@ -823,7 +823,7 @@ static void *DEH_TextStart(deh_context_t *context, char *line)
     }
 
     // We must always free the replacement text.
-    free(repl_text);
+    myfree(repl_text);
 
     return NULL;
 }

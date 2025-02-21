@@ -126,7 +126,7 @@ wad_file_t *W_AddFile (const char *filename)
                     "file in the -file list.");
         }
 
-        reloadname = strdup(filename);
+        reloadname = mystrdup(filename);
         reloadlump = numlumps;
         ++filename;
     }
@@ -197,7 +197,7 @@ wad_file_t *W_AddFile (const char *filename)
     }
 
     // Increase size of numlumps array to accomodate the new file.
-    filelumps = calloc(numfilelumps, sizeof(lumpinfo_t));
+    filelumps = mycalloc(numfilelumps, sizeof(lumpinfo_t));
     if (filelumps == NULL)
     {
         W_CloseFile(wad_file);
@@ -605,13 +605,13 @@ void W_Reload(void)
     filename = reloadname;
 
     W_CloseFile(reloadhandle);
-    free(reloadlumps);
+    myfree(reloadlumps);
 
     reloadname = NULL;
     reloadlump = -1;
     reloadhandle = NULL;
     W_AddFile(filename);
-    free(filename);
+    myfree(filename);
 
     // The WAD directory has changed, so we have to regenerate the
     // fast lookup hashtable:

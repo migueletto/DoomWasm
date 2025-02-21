@@ -851,7 +851,7 @@ static boolean IsDemoFile(int lumpnum)
     lower = M_StringDuplicate(lumpinfo[lumpnum]->wad_file->path);
     M_ForceLowercase(lower);
     result = M_StringEndsWith(lower, ".lmp");
-    free(lower);
+    myfree(lower);
 
     return result;
 }

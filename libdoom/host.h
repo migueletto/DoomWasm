@@ -53,4 +53,19 @@ void M_Quit(void);
 void setPalette(void);
 void saveIcons(void);
 
+void *mymalloc_full(const char *file, const char *func, int line, size_t size);
+#define mymalloc(size) mymalloc_full(__FILE__, __FUNCTION__, __LINE__, size)
+
+void *mycalloc_full(const char *file, const char *func, int line, size_t nmemb, size_t size);
+#define mycalloc(nmemb, size) mycalloc_full(__FILE__, __FUNCTION__, __LINE__, nmemb, size)
+
+void *myrealloc_full(const char *file, const char *func, int line, void *ptr, size_t size);
+#define myrealloc(ptr, size) myrealloc_full(__FILE__, __FUNCTION__, __LINE__, ptr, size)
+
+void myfree_full(const char *file, const char *func, int line, void *ptr);
+#define myfree(ptr) myfree_full(__FILE__, __FUNCTION__, __LINE__, ptr)
+
+char *mystrdup_full(const char *file, const char *func, int line, const char *s);
+#define mystrdup(s) mystrdup_full(__FILE__, __FUNCTION__, __LINE__, s)
+
 #endif //DOOM_GENERIC

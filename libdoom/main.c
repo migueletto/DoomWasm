@@ -14,11 +14,15 @@
 
 struct dg_file_t {
   uint8_t *buffer;
+  uint32_t alloc;
   uint32_t size;
   uint32_t pos;
+  char *name;
+  int dynamic, wr;
 };
 
 struct dg_dir_t {
+  // not used
   int fd;
 };
 
@@ -29,6 +33,12 @@ static int width, height;
 static uint64_t t0;
 static char *argv[16];
 
+#define MAX_PATH 256
+
+static char config[MAX_PATH];
+static char extraConfig[MAX_PATH];
+static char savedir[MAX_PATH];
+
 #define KEYQUEUE_SIZE 16
 
 static uint16_t KeyQueue[KEYQUEUE_SIZE];
@@ -37,13 +47,18 @@ static uint32_t KeyQueueReadIndex;
 
 static uint32_t *DG_ScreenBuffer;
 
-static dg_file_t config, extra, wad = {0}, extraWad = {0}, aux;
+static dg_file_t wad = {0}, extraWad = {0};
 
 extern void D_DoomMain(void);
 extern int D_RunFrame(void);
 
 extern void console_log(char *buf);
 extern void get_now(struct timespec *tp);
+extern int file_size(char *name);
+extern void file_read(char *name, uint8_t *buf);
+extern void file_write(char *name, uint8_t *buf, uint32_t n);
+extern void file_remove(char *name);
+extern void file_rename(char *oldname, char *newname);
 
 uint32_t DG_color32(uint32_t r, uint32_t g, uint32_t b) {
   // 32 bits color ABGR (A is MSB)
@@ -64,11 +79,13 @@ static void DG_Init(void) {
   t0 = gettime();
   KeyQueueWriteIndex = 0;
   KeyQueueReadIndex = 0;
-  DG_ScreenBuffer = malloc(SCREENWIDTH * 2 * SCREENHEIGHT * 2 * 4);
+  DG_ScreenBuffer = mymalloc(SCREENWIDTH * 2 * SCREENHEIGHT * 2 * 4);
 }
 
 static void DG_Finish(void) {
-  free(DG_ScreenBuffer);
+  if (extraWad.buffer) myfree(extraWad.buffer);
+  if (wad.buffer) myfree(wad.buffer);
+  myfree(DG_ScreenBuffer);
 }
 
 static uint8_t convertToDoomKey(int key) {
@@ -148,53 +165,76 @@ int DG_create(char *name) {
 }
 
 dg_file_t *DG_open(char *name, int wr) {
-  uint32_t len;
-
-  DG_debug(1, "DG_open(\"%s\", %d)", name, wr);
-
-  if (!strcmp(name, "config.cfg")) {
-    config.buffer = (uint8_t *)gameConfig(variant);
-    config.size = strlen((char *)config.buffer);
-    config.pos = 0;
-    DG_debug(1, "returning internal %s", name);
-    return &config;
-  }
-
-  if (!strcmp(name, "extra.cfg")) {
-    extra.buffer = (uint8_t *)gameExtraConfig(variant);
-    extra.size = strlen((char *)extra.buffer);
-    extra.pos = 0;
-    DG_debug(1, "returning internal %s", name);
-    return &extra;
-  }
+  dg_file_t *f;
+  int len;
 
   if (!strcmp(name, gameWad(variant))) {
+    wad.dynamic = 0;
     wad.pos = 0;
-    DG_debug(1, "returning internal %s (%d bytes)", name, wad.size);
+    DG_debug(1, "DG_open internal \"%s\" reading %u bytes", name, wad.size);
     return &wad;
   }
 
   if (extraWad.buffer && !strcmp(name, "extra.wad")) {
+    wad.dynamic = 0;
     extraWad.pos = 0;
-    DG_debug(1, "returning internal %s (%d bytes)", name, extraWad.size);
+    DG_debug(1, "DG_open internal \"%s\" reading %u bytes", name, extraWad.size);
     return &extraWad;
   }
 
   if (wr) {
-    aux.buffer = NULL;
-    aux.size = 0;
-    aux.pos = 0;
-    DG_debug(1, "returning fake %s", name);
-    return &aux;
+    if ((f = mycalloc(1, sizeof(dg_file_t))) != NULL) {
+      f->name = mystrdup(name);
+      f->dynamic = 1;
+      f->wr = 1;
+      f->alloc = 65536;
+      f->buffer = mymalloc(f->alloc);
+    }
+    DG_debug(1, "DG_open create file \"%s\"", f->name);
+    return f;
   }
 
-  return NULL;
+  len = file_size(name);
+  if (len < 0) return NULL;
+  DG_debug(1, "DG_open \"%s\" len=%d", name, len);
+
+  if ((f = mycalloc(1, sizeof(dg_file_t))) != NULL) {
+    f->name = mystrdup(name);
+    f->alloc = (len + 1023) & 0xFFFFFC00;
+    f->size = len;
+    f->dynamic = 1;
+    f->wr = 0;
+    if (len > 0) {
+      DG_debug(1, "DG_open malloc %u", f->alloc);
+      if ((f->buffer = mymalloc(f->alloc)) == NULL) {
+        myfree(f->name);
+        myfree(f);
+        return NULL;
+      }
+      DG_debug(1, "DG_open \"%s\" reading %u bytes", name, f->size);
+      file_read(name, f->buffer);
+    } else {
+      DG_debug(1, "DG_open empty \"%s\"", name);
+    }
+  }
+
+  return f;
 }
 
 void DG_close(dg_file_t *f) {
   if (f) {
     DG_debug(1, "DG_close");
     f->pos = 0;
+
+    if (f->dynamic) {
+      if (f->name && f->buffer && f->size && f->wr) {
+        DG_debug(1, "DG_close writing %u bytes to \"%s\"", f->size, f->name);
+        file_write(f->name, f->buffer, f->size);
+      }
+      if (f->name) myfree(f->name);
+      if (f->buffer) myfree(f->buffer);
+      myfree(f);
+    }
   }
 }
 
@@ -211,6 +251,8 @@ int DG_eof(dg_file_t *f) {
 int DG_isdir(char *name) {
   int r = 0;
 
+  DG_debug(1, "DG_isdir(\"%s\")", name);
+
   return r;
 }
 
@@ -218,7 +260,7 @@ int DG_read(dg_file_t *f, void *buf, int n) {
   int r = -1;
 
   if (f && buf) {
-    r = n < (f->size - f->pos) ? n : f->size - f->pos;
+    r = n <= (f->size - f->pos) ? n : f->size - f->pos;
     memcpy(buf, f->buffer + f->pos, r);
     f->pos += r;
   }
@@ -227,7 +269,31 @@ int DG_read(dg_file_t *f, void *buf, int n) {
 }
 
 int DG_write(dg_file_t *f, void *buf, int n) {
-  return n;
+  int r = -1;
+
+  if (f && buf && n >= 0 && f->dynamic && f->wr) {
+    if (n == 0) {
+      r = 0;
+    } else {
+      if (f->buffer == NULL) {
+        //DG_debug(1, "DG_write \"%s\" n=%u init", f->name, n);
+        f->alloc = n < 1024 ? 1024 : n;
+        f->buffer = mymalloc(f->alloc);
+      } else if (f->size + n <= f->alloc) {
+        //DG_debug(1, "DG_write \"%s\" n=%u append, size=%u, alloc=%u", f->name, n, f->size, f->alloc);
+      } else {
+        //DG_debug(1, "DG_write \"%s\" n=%u increase, size=%u, alloc=%u", f->name, n, f->size, f->alloc);
+        f->alloc += n < 1024 ? 1024 : n;
+        f->buffer = myrealloc(f->buffer, f->alloc);
+      }
+      memcpy(f->buffer + f->pos, buf, n);
+      f->size += n;
+      f->pos += n;
+      r = n;
+    }
+  }
+
+  return r;
 }
 
 int DG_seek(dg_file_t *f, int offset) {
@@ -270,11 +336,13 @@ int DG_mkdir(char *name) {
 
 int DG_remove(char *name) {
   DG_debug(1 ,"DG_remove(\"%s\")", name);
+  file_remove(name);
   return 0;
 }
 
 int DG_rename(char *oldname, char *newname) {
   DG_debug(1 ,"DG_rename(\"%s\", \"%s\")", oldname, newname);
+  file_rename(oldname, newname);
   return 0;
 }
 
@@ -333,7 +401,7 @@ dg_dir_t *DG_opendir(char *name) {
   dg_dir_t *f;
 
   DG_debug(1 ,"DG_opendir(\"%s\")", name);
-  if ((f = calloc(1, sizeof(dg_dir_t))) != NULL) {
+  if ((f = mycalloc(1, sizeof(dg_dir_t))) != NULL) {
   }
 
   return f;
@@ -350,7 +418,7 @@ int DG_readdir(dg_dir_t *f, char *name, int len) {
 
 void DG_closedir(dg_dir_t *f) {
   if (f) {
-    free(f);
+    myfree(f);
   }
 }
 
@@ -373,6 +441,10 @@ void DoomInit(void) {
   width = SCREENWIDTH;
   height = SCREENHEIGHT;
 
+  snprintf(config, MAX_PATH-1, "/%s/config%d.cfg", gameName(), variant);
+  snprintf(extraConfig, MAX_PATH-1, "/%s/extra%d.cfg", gameName(), variant);
+  snprintf(savedir, MAX_PATH-1, "/%s/savedir%d", gameName(), variant);
+
   myargc = 0;
   argv[myargc++] = gameName();
   argv[myargc++] = "-iwad";
@@ -382,11 +454,11 @@ void DoomInit(void) {
     argv[myargc++] = "extra.wad";
   }
   argv[myargc++] = "-config";
-  argv[myargc++] = "config.cfg";
+  argv[myargc++] = config;
   argv[myargc++] = "-extraconfig";
-  argv[myargc++] = "extra.cfg";
+  argv[myargc++] = extraConfig;
   argv[myargc++] = "-savedir";
-  argv[myargc++] = "savedir";
+  argv[myargc++] = savedir;
   argv[myargc] = NULL;
   myargv = argv;
 
@@ -395,7 +467,6 @@ void DoomInit(void) {
   DG_Init();
 
   D_DoomMain();
-  DG_Finish();
 }
 
 char *DoomWadName(int _variant) {
@@ -406,21 +477,14 @@ char *DoomWadName(int _variant) {
 
 void *DoomWadAlloc(int len) {
   if (wad.buffer == NULL) {
-    wad.buffer = malloc(len);
+    wad.buffer = mymalloc(len);
     wad.size = len;
     return wad.buffer;
   }
 
-  extraWad.buffer = malloc(len);
+  extraWad.buffer = mymalloc(len);
   extraWad.size = len;
   return extraWad.buffer;
-}
-
-static void mtest(void) {
-  char *p = malloc(32);
-  strcpy(p, "mtest");
-  DG_debug(1, "%s", p);
-  free(p);
 }
 
 void *DoomStep(void) {
@@ -428,7 +492,6 @@ void *DoomStep(void) {
     setIntVariable(gameMsgOn(), 0);
     setIntVariable("usegamma", 1);
     setPalette();
-    mtest();
     first = 0;
   }
 
@@ -436,8 +499,53 @@ void *DoomStep(void) {
 
   if (finish) {
     DG_debug(1, "last step");
+    DG_Finish();
     return NULL;
   }
 
   return DG_ScreenBuffer;
+}
+
+void *mymalloc_full(const char *file, const char *func, int line, size_t size) {
+  if (size % 4) size += 4 - (size % 4);
+  void *p = malloc(size);
+  memset(p, 0, size);
+  //DG_debug_full(file, func, line, 1,  "HEAP %s %s %d alloc %p %u", file, func, line, p, size);
+  return p;
+}
+
+void *mycalloc_full(const char *file, const char *func, int line, size_t nmemb, size_t size) {
+  size *= nmemb;
+  if (size % 4) size += 4 - (size % 4);
+  void *p = malloc(size);
+  memset(p, 0, size);
+  //DG_debug_full(file, func, line, 1,  "HEAP %s %s %d alloc %p %u", file, func, line, p, size);
+  return p;
+}
+
+void *myrealloc_full(const char *file, const char *func, int line, void *ptr, size_t size) {
+  if (size % 4) size += 4 - (size % 4);
+  void *p = realloc(ptr, size);
+  //DG_debug_full(file, func, line, 1, "HEAP %s %s %d free %p", ptr);
+  //DG_debug_full(file, func, line, 1, "HEAP %s %s %d alloc %p %u", file, func, line, p, size);
+  return p;
+}
+
+char *mystrdup_full(const char *file, const char *func, int line, const char *s) {
+  char *r = NULL;
+  if (s) {
+    size_t len = strlen(s);
+    size_t size = len + 1;
+    if (size % 4) size += 4 - (size % 4);
+    r = malloc(size);
+    memset(r, 0, size);
+    memcpy(r, s, len);
+    //DG_debug_full(file, func, line, 1,  "HEAP %s %s %d alloc %p %u", file, func, line, r, size);
+  }
+  return r;
+}
+
+void myfree_full(const char *file, const char *func, int line, void *ptr) {
+  //DG_debug_full(file, func, line, 1, "HEAP %s %s %d free %p", file, func, line, ptr);
+  if (ptr) free(ptr);
 }

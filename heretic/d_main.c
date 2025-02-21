@@ -434,7 +434,7 @@ void D_CheckRecordFrom(void)
 
     G_RecordDemo(gameskill, 1, gameepisode, gamemap, myargv[p + 2]);
     D_DoomLoop();               // never returns
-    free(filename);
+    myfree(filename);
 }
 
 /*
@@ -926,7 +926,7 @@ void D_DoomMain(void)
         {
             DEH_AutoLoadPatches(autoload_dir);
             W_AutoLoadWADs(autoload_dir);
-            free(autoload_dir);
+            myfree(autoload_dir);
         }
     }
 
@@ -961,7 +961,7 @@ void D_DoomMain(void)
 
     if (p)
     {
-        char *uc_filename = strdup(myargv[p + 1]);
+        char *uc_filename = mystrdup(myargv[p + 1]);
         M_ForceUppercase(uc_filename);
 
         // In Vanilla, the filename must be specified without .lmp,
@@ -975,7 +975,7 @@ void D_DoomMain(void)
             DEH_snprintf(file, sizeof(file), "%s.lmp", myargv[p + 1]);
         }
 
-        free(uc_filename);
+        myfree(uc_filename);
 
         if (D_AddFile(file))
         {

@@ -144,7 +144,7 @@ static void ParseLine(gus_config_t *config, char *line)
     {
         // DMX uses wrong patch name (we should use name of 'mapped_id'
         // instrument, but DMX uses name of 'instr_id' instead).
-        free(config->patch_names[i]);
+        myfree(config->patch_names[i]);
         config->patch_names[i] = M_StringDuplicate(fields[5]);
         config->used[i] = mapped_id;
         config->count++;
@@ -197,7 +197,7 @@ static void FreeDMXConfig(gus_config_t *config)
 
     for (i = 0; i < MAX_INSTRUMENTS; ++i)
     {
-        free(config->patch_names[i]);
+        myfree(config->patch_names[i]);
     }
 }
 

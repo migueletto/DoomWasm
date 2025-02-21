@@ -27,6 +27,8 @@
 #include "txt_separator.h"
 #include "txt_window.h"
 
+#include "host.h"
+
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -60,7 +62,7 @@ txt_window_t *TXT_NewWindow(const char *title)
 
     txt_window_t *win;
 
-    win = malloc(sizeof(txt_window_t));
+    win = mymalloc(sizeof(txt_window_t));
 
     TXT_InitTable(&win->table, 1);
 
@@ -70,7 +72,7 @@ txt_window_t *TXT_NewWindow(const char *title)
     }
     else
     {
-        win->title = strdup(title);
+        win->title = mystrdup(title);
     }
 
     win->x = TXT_SCREEN_W / 2;
@@ -105,7 +107,7 @@ void TXT_CloseWindow(txt_window_t *window)
     TXT_EmitSignal(window, "closed");
     TXT_RemoveDesktopWindow(window);
 
-    free(window->title);
+    myfree(window->title);
 
     // Destroy all actions
 
@@ -536,7 +538,7 @@ void TXT_OpenURL(const char *url)
     int retval;
 
     cmd_len = strlen(url) + 30;
-    cmd = malloc(cmd_len);
+    cmd = mymalloc(cmd_len);
 
 #if defined(__MACOSX__)
     TXT_snprintf(cmd, cmd_len, "open \"%s\"", url);
@@ -547,7 +549,7 @@ void TXT_OpenURL(const char *url)
     {
         fprintf(stderr,
                 "xdg-utils is not installed. Can't open this URL:\n%s\n", url);
-        free(cmd);
+        myfree(cmd);
         return;
     }
 
@@ -560,7 +562,7 @@ void TXT_OpenURL(const char *url)
         fprintf(stderr, "TXT_OpenURL: error executing '%s'; return code %d\n",
             cmd, retval);
     }
-    free(cmd);
+    myfree(cmd);
 }
 
 #endif /* #ifndef _WIN32 */

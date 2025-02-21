@@ -1582,7 +1582,7 @@ void G_DoLoadGame(void)
 
     SV_OpenRead(savename);
 
-    free(savename);
+    myfree(savename);
     savename = NULL;
 
     // Skip the description field
@@ -2184,6 +2184,6 @@ void G_DoSaveGame(void)
     savedescription[0] = 0;
     P_SetMessage(&players[consoleplayer], DEH_String(TXT_GAMESAVED), true);
 
-    free(filename);
+    myfree(filename);
 }
 

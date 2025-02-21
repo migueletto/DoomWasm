@@ -184,7 +184,7 @@ void I_ShutdownGraphics(void)
     {
         initialized = 0;
     }
-    if (I_VideoBuffer) free(I_VideoBuffer);
+    if (I_VideoBuffer) myfree(I_VideoBuffer);
 }
 
 //
@@ -395,7 +395,7 @@ void I_GetWindowPosition(int *x, int *y, int w, int h)
 
 void I_InitGraphics(void)
 {
-  I_VideoBuffer = malloc(SCREENWIDTH * SCREENHEIGHT * sizeof(*I_VideoBuffer));
+  I_VideoBuffer = mymalloc(SCREENWIDTH * SCREENHEIGHT * sizeof(*I_VideoBuffer));
   memset(I_VideoBuffer, 0, SCREENWIDTH * SCREENHEIGHT * sizeof(*I_VideoBuffer));
   initialized = true;
 }

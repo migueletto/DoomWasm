@@ -141,7 +141,7 @@ char *M_FileCaseExists(const char *path) {
     }
 
     // 5. no luck
-    free(path_dup);
+    myfree(path_dup);
     return NULL;
 }
 
@@ -353,7 +353,7 @@ const char *M_StrCaseStr(const char *haystack, const char *needle)
 }
 
 //
-// Safe version of strdup() that checks the string was successfully
+// Safe version of mystrdup() that checks the string was successfully
 // allocated.
 //
 
@@ -361,7 +361,7 @@ char *M_StringDuplicate(const char *orig)
 {
     char *result;
 
-    result = strdup(orig);
+    result = mystrdup(orig);
 
     if (result == NULL)
     {
@@ -403,7 +403,7 @@ char *M_StringReplace(const char *haystack, const char *needle,
 
     // Construct new string.
 
-    result = malloc(result_len);
+    result = mymalloc(result_len);
     if (result == NULL)
     {
         I_Error("M_StringReplace: Failed to allocate new string");
@@ -513,7 +513,7 @@ char *M_StringJoin(const char *s, ...)
     }
     va_end(args);
 
-    result = malloc(result_len);
+    result = mymalloc(result_len);
 
     if (result == NULL)
     {

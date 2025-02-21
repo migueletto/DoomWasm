@@ -108,7 +108,7 @@ static wad_file_t *W_Win32_OpenFile(const char *path)
                          FILE_ATTRIBUTE_NORMAL,
                          NULL);
 
-    free(wpath);
+    myfree(wpath);
 
     if (handle == INVALID_HANDLE_VALUE)
     {

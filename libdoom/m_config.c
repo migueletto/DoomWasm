@@ -2153,7 +2153,7 @@ static void SetVariable(default_t *def, const char *value)
             }
 
             *def->location.f = (float) atof(str);
-            free(str);
+            myfree(str);
         }
             break;
     }
@@ -2568,7 +2568,7 @@ char *M_GetSaveGameDir(const char *iwadname)
 
         M_MakeDirectory(savegamedir);
 
-        free(topdir);
+        myfree(topdir);
     }
 
     return savegamedir;

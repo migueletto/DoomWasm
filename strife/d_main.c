@@ -900,7 +900,7 @@ void D_IdentifyVersion(void)
         {
             // add it.
             D_AddFile(name);
-            free(name);
+            myfree(name);
         }
     }
 }
@@ -1774,7 +1774,7 @@ void D_DoomMain (void)
         {
             DEH_AutoLoadPatches(autoload_dir);
             W_AutoLoadWADs(autoload_dir);
-            free(autoload_dir);
+            myfree(autoload_dir);
         }
     }
 #endif
@@ -1829,7 +1829,7 @@ void D_DoomMain (void)
 
     if (p)
     {
-        char *uc_filename = strdup(myargv[p + 1]);
+        char *uc_filename = mystrdup(myargv[p + 1]);
         M_ForceUppercase(uc_filename);
 
         // With Vanilla you have to specify the file without extension,
@@ -1843,7 +1843,7 @@ void D_DoomMain (void)
             DEH_snprintf(file, sizeof(file), "%s.lmp", myargv[p+1]);
         }
 
-        free(uc_filename);
+        myfree(uc_filename);
 
         if (D_AddFile (file))
         {

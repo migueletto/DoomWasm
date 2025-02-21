@@ -47,6 +47,8 @@
 #include "w_wad.h"
 #include "z_zone.h"
 
+#include "host.h"
+
 #define DEFAULT_RAM 16 /* MiB */
 #define MIN_RAM     4  /* MiB */
 
@@ -66,7 +68,7 @@ void I_AtExit(atexit_func_t func, boolean run_on_error)
 {
     atexit_listentry_t *entry;
 
-    entry = malloc(sizeof(*entry));
+    entry = mymalloc(sizeof(*entry));
 
     entry->func = func;
     entry->run_on_error = run_on_error;
@@ -108,7 +110,7 @@ static byte *AutoAllocMemory(int *size, int default_ram, int min_ram)
 
         *size = default_ram * 1024 * 1024;
 
-        zonemem = malloc(*size);
+        zonemem = mymalloc(*size);
 
         // Failed to allocate?  Reduce zone size until we reach a size
         // that is acceptable.
@@ -308,7 +310,7 @@ void *I_Realloc(void *ptr, size_t size)
 {
     void *new_ptr;
 
-    new_ptr = realloc(ptr, size);
+    new_ptr = myrealloc(ptr, size);
 
     if (size != 0 && new_ptr == NULL)
     {

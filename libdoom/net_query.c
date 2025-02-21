@@ -248,7 +248,7 @@ static void FreeTargets(void)
     {
         NET_ReleaseAddress(targets[i].addr);
     }
-    free(targets);
+    myfree(targets);
     targets = NULL;
     num_targets = 0;
 }
@@ -588,7 +588,7 @@ void NET_Query_Init(void)
         //net_sdl_module.InitClient();
     }
 
-    free(targets);
+    myfree(targets);
     targets = NULL;
     num_targets = 0;
 

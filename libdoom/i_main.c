@@ -41,7 +41,7 @@ int main(int argc, char **argv)
     // save arguments
 
     myargc = argc;
-    myargv = malloc(argc * sizeof(char *));
+    myargv = mymalloc(argc * sizeof(char *));
     assert(myargv != NULL);
 
     for (int i = 0; i < argc; i++)

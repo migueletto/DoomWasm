@@ -102,7 +102,7 @@ static void LoadResponseFile(int argv_index, const char *filename)
     // at the end of the response file, in which case a '\0' will be
     // needed.
 
-    file = malloc(size + 1);
+    file = mymalloc(size + 1);
 
     i = 0;
 
@@ -122,7 +122,7 @@ static void LoadResponseFile(int argv_index, const char *filename)
 
     // Create new arguments list array
 
-    newargv = malloc(sizeof(char *) * MAXARGVS);
+    newargv = mymalloc(sizeof(char *) * MAXARGVS);
     newargc = 0;
     memset(newargv, 0, sizeof(char *) * MAXARGVS);
 
@@ -218,16 +218,16 @@ static void LoadResponseFile(int argv_index, const char *filename)
     {
         if (myargv[i] != NULL)
         {
-            free(myargv[i]);
+            myfree(myargv[i]);
             myargv[i] = NULL;
         }
     }
 
-    free(myargv);
+    myfree(myargv);
     myargv = newargv;
     myargc = newargc;
 
-    free(file);
+    myfree(file);
 
 #if 0
     // Disabled - Vanilla Doom does not do this.
@@ -277,7 +277,7 @@ void M_FindResponseFile(void)
         // the loop we'll ignore it. Since some parameters stop reading when
         // an argument beginning with a '-' is encountered, we keep something
         // that starts with a '-'.
-        free(myargv[i]);
+        myfree(myargv[i]);
         myargv[i] = M_StringDuplicate("-_");
         LoadResponseFile(i + 1, myargv[i + 1]);
     }
@@ -398,7 +398,7 @@ static int GuessFileType(const char *name)
         ret = FILETYPE_DEH;
     }
 
-    free(lower);
+    myfree(lower);
 
     return ret;
 }
@@ -433,7 +433,7 @@ void M_AddLooseFiles(void)
     // allocate space for up to four additional regular parameters
     // (-iwad, -merge, -deh, -playdemo)
 
-    arguments = malloc((myargc + 4) * sizeof(*arguments));
+    arguments = mymalloc((myargc + 4) * sizeof(*arguments));
     memset(arguments, 0, (myargc + 4) * sizeof(*arguments));
 
     // check the command line and make sure it does not already
@@ -451,7 +451,7 @@ void M_AddLooseFiles(void)
             ((!isalpha(arg[0]) || arg[1] != ':' || arg[2] != '\\') &&
             (arg[0] != '\\' || arg[1] != '\\')))
         {
-            free(arguments);
+            myfree(arguments);
             return;
         }
 
@@ -491,7 +491,7 @@ void M_AddLooseFiles(void)
         myargc++;
     }
 
-    newargv = malloc(myargc * sizeof(*newargv));
+    newargv = mymalloc(myargc * sizeof(*newargv));
 
     // sort the argument list by file type, except for the zeroth argument
     // which is the executable invocation itself
@@ -505,9 +505,9 @@ void M_AddLooseFiles(void)
         newargv[i] = arguments[i].str;
     }
 
-    free(arguments);
+    myfree(arguments);
 
-    free(myargv);
+    myfree(myargv);
     myargv = newargv;
 }
 #endif
@@ -527,5 +527,5 @@ void M_SetExeDir(void)
 
     dirname = M_DirName(myargv[0]);
     exedir = M_StringJoin(dirname, DIR_SEPARATOR_S, NULL);
-    free(dirname);
+    myfree(dirname);
 }

@@ -145,7 +145,7 @@ static void FreeAllocatedSound(allocated_sound_t *snd)
 
     allocated_sounds_size -= snd->chunk.alen;
 
-    free(snd);
+    myfree(snd);
 }
 
 // Search from the tail backwards along the allocated sounds list, find
@@ -214,7 +214,7 @@ static allocated_sound_t *AllocateSound(sfxinfo_t *sfxinfo, size_t len)
 
     do
     {
-        snd = malloc(sizeof(allocated_sound_t) + len);
+        snd = mymalloc(sizeof(allocated_sound_t) + len);
 
         // Out of memory?  Try to free an old sound, then loop round
         // and try again.
@@ -417,13 +417,13 @@ static boolean ExpandSoundData_SRC(sfxinfo_t *sfxinfo,
     Mix_Chunk *chunk;
 
     src_data.input_frames = length;
-    data_in = malloc(length * sizeof(float));
+    data_in = mymalloc(length * sizeof(float));
     src_data.data_in = data_in;
     src_data.src_ratio = (double)mixer_freq / samplerate;
 
     // We include some extra space here in case of rounding-up.
     src_data.output_frames = src_data.src_ratio * length + (mixer_freq / 4);
-    src_data.data_out = malloc(src_data.output_frames * sizeof(float));
+    src_data.data_out = mymalloc(src_data.output_frames * sizeof(float));
 
     assert(src_data.data_in != NULL && src_data.data_out != NULL);
 
@@ -503,8 +503,8 @@ static boolean ExpandSoundData_SRC(sfxinfo_t *sfxinfo,
         expanded[abuf_index++] = cvtval_i;
     }
 
-    free(data_in);
-    free(src_data.data_out);
+    myfree(data_in);
+    myfree(src_data.data_out);
 
     if (clipped > 0)
     {
@@ -638,14 +638,14 @@ static boolean ExpandSoundData_SDL(sfxinfo_t *sfxinfo,
                           mixer_format, mixer_channels, mixer_freq))
     {
         convertor.len = length;
-        convertor.buf = malloc(convertor.len * convertor.len_mult);
+        convertor.buf = mymalloc(convertor.len * convertor.len_mult);
         assert(convertor.buf != NULL);
         memcpy(convertor.buf, data, length);
 
         SDL_ConvertAudio(&convertor);
 
         memcpy(chunk->abuf, convertor.buf, chunk->alen);
-        free(convertor.buf);
+        myfree(convertor.buf);
     }
     else
     {

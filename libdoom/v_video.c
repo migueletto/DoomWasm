@@ -781,7 +781,7 @@ void WritePNGfile(char *filename, pixel_t *data,
                  8, PNG_COLOR_TYPE_PALETTE, PNG_INTERLACE_NONE,
                  PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 
-    pcolor = malloc(sizeof(*pcolor) * 256);
+    pcolor = mymalloc(sizeof(*pcolor) * 256);
     if (!pcolor)
     {
         DG_close(handle);
@@ -797,11 +797,11 @@ void WritePNGfile(char *filename, pixel_t *data,
     }
 
     png_set_PLTE(ppng, pinfo, pcolor, 256);
-    free(pcolor);
+    myfree(pcolor);
 
     png_write_info(ppng, pinfo);
 
-    rowbuf = malloc(width);
+    rowbuf = mymalloc(width);
 
     if (rowbuf)
     {
@@ -820,7 +820,7 @@ void WritePNGfile(char *filename, pixel_t *data,
             }
         }
 
-        free(rowbuf);
+        myfree(rowbuf);
     }
 
     png_write_end(ppng, pinfo);

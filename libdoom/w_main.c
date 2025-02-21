@@ -60,7 +60,7 @@ boolean W_ParseCommandLine(void)
 
             printf(" merging %s\n", filename);
             W_MergeFile(filename);
-            free(filename);
+            myfree(filename);
         }
     }
 
@@ -89,7 +89,7 @@ boolean W_ParseCommandLine(void)
 
             printf(" performing NWT-style merge of %s\n", filename);
             W_NWTDashMerge(filename);
-            free(filename);
+            myfree(filename);
         }
     }
     
@@ -117,7 +117,7 @@ boolean W_ParseCommandLine(void)
 
             printf(" merging flats from %s\n", filename);
             W_NWTMergeFile(filename, W_NWT_MERGE_FLATS);
-            free(filename);
+            myfree(filename);
         }
     }
 
@@ -142,7 +142,7 @@ boolean W_ParseCommandLine(void)
 
             printf(" merging sprites from %s\n", filename);
             W_NWTMergeFile(filename, W_NWT_MERGE_SPRITES);
-            free(filename);
+            myfree(filename);
         }
     }
 
@@ -167,7 +167,7 @@ boolean W_ParseCommandLine(void)
 
             printf(" merging sprites and flats from %s\n", filename);
             W_NWTMergeFile(filename, W_NWT_MERGE_SPRITES | W_NWT_MERGE_FLATS);
-            free(filename);
+            myfree(filename);
         }
     }
 
@@ -192,7 +192,7 @@ boolean W_ParseCommandLine(void)
 
             DG_debug(DEBUG_INFO, "adding %s", filename);
 	    W_AddFile(filename);
-            free(filename);
+            myfree(filename);
         }
     }
 

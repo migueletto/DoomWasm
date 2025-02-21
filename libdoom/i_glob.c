@@ -61,9 +61,9 @@ static void FreeStringList(char **globs, int num_globs)
     int i;
     for (i = 0; i < num_globs; ++i)
     {
-        free(globs[i]);
+        myfree(globs[i]);
     }
-    free(globs);
+    myfree(globs);
 }
 
 glob_t *I_StartMultiGlob(const char *directory, int flags,
@@ -75,7 +75,7 @@ glob_t *I_StartMultiGlob(const char *directory, int flags,
     va_list args;
     char *directory_native;
 
-    globs = malloc(sizeof(char *));
+    globs = mymalloc(sizeof(char *));
     if (globs == NULL)
     {
         return NULL;
@@ -94,7 +94,7 @@ glob_t *I_StartMultiGlob(const char *directory, int flags,
             break;
         }
 
-        new_globs = realloc(globs, sizeof(char *) * (num_globs + 1));
+        new_globs = myrealloc(globs, sizeof(char *) * (num_globs + 1));
         if (new_globs == NULL)
         {
             FreeStringList(globs, num_globs);
@@ -105,7 +105,7 @@ glob_t *I_StartMultiGlob(const char *directory, int flags,
     }
     va_end(args);
 
-    result = malloc(sizeof(glob_t));
+    result = mymalloc(sizeof(glob_t));
     if (result == NULL)
     {
         FreeStringList(globs, num_globs);
@@ -118,8 +118,8 @@ glob_t *I_StartMultiGlob(const char *directory, int flags,
     if (result->dir == NULL)
     {
         FreeStringList(globs, num_globs);
-        free(result);
-        free(directory_native);
+        myfree(result);
+        myfree(directory_native);
         return NULL;
     }
 
@@ -149,10 +149,10 @@ void I_EndGlob(glob_t *glob)
     FreeStringList(glob->globs, glob->num_globs);
     FreeStringList(glob->filenames, glob->filenames_len);
 
-    free(glob->directory);
-    if (glob->last_filename) free(glob->last_filename);
+    myfree(glob->directory);
+    if (glob->last_filename) myfree(glob->last_filename);
     (void) DG_closedir(glob->dir);
-    free(glob);
+    myfree(glob);
 }
 
 static boolean MatchesGlob(const char *name, const char *glob, int flags)
@@ -233,7 +233,7 @@ static char *NextGlob(glob_t *glob)
 
     ret = M_ConvertSysNativeMBToUtf8(temp);
 
-    free(temp);
+    myfree(temp);
 
     return ret;
 }
@@ -253,7 +253,7 @@ static void ReadAllFilenames(glob_t *glob)
         {
             break;
         }
-        glob->filenames = realloc(glob->filenames,
+        glob->filenames = myrealloc(glob->filenames,
                                   (glob->filenames_len + 1) * sizeof(char *));
         glob->filenames[glob->filenames_len] = name;
         ++glob->filenames_len;
@@ -310,7 +310,7 @@ const char *I_NextGlob(glob_t *glob)
     // them back from the system API.
     if ((glob->flags & GLOB_FLAG_SORTED) == 0)
     {
-        if (glob->last_filename) free(glob->last_filename);
+        if (glob->last_filename) myfree(glob->last_filename);
         glob->last_filename = NextGlob(glob);
         return glob->last_filename;
     }

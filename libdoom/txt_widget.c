@@ -21,6 +21,8 @@
 #include "txt_gui.h"
 #include "txt_desktop.h"
 
+#include "host.h"
+
 typedef struct
 {
     char *signal_name;
@@ -39,7 +41,7 @@ txt_callback_table_t *TXT_NewCallbackTable(void)
 {
     txt_callback_table_t *table;
 
-    table = malloc(sizeof(txt_callback_table_t));
+    table = mymalloc(sizeof(txt_callback_table_t));
     table->callbacks = NULL;
     table->num_callbacks = 0;
     table->refcount = 1;
@@ -64,11 +66,11 @@ void TXT_UnrefCallbackTable(txt_callback_table_t *table)
 
         for (i=0; i<table->num_callbacks; ++i)
         {
-            free(table->callbacks[i].signal_name);
+            myfree(table->callbacks[i].signal_name);
         }
     
-        free(table->callbacks);
-        free(table);
+        myfree(table->callbacks);
+        myfree(table);
     }
 }
 
@@ -107,12 +109,12 @@ void TXT_SignalConnect(TXT_UNCAST_ARG(widget),
     // Add a new callback to the table
 
     table->callbacks 
-            = realloc(table->callbacks,
+            = myrealloc(table->callbacks,
                       sizeof(txt_callback_t) * (table->num_callbacks + 1));
     callback = &table->callbacks[table->num_callbacks];
     ++table->num_callbacks;
 
-    callback->signal_name = strdup(signal_name);
+    callback->signal_name = mystrdup(signal_name);
     callback->func = func;
     callback->user_data = user_data;
 }
@@ -180,7 +182,7 @@ void TXT_DestroyWidget(TXT_UNCAST_ARG(widget))
 
     widget->widget_class->destructor(widget);
     TXT_UnrefCallbackTable(widget->callback_table);
-    free(widget);
+    myfree(widget);
 }
 
 int TXT_WidgetKeyPress(TXT_UNCAST_ARG(widget), int key)

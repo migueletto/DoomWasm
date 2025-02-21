@@ -23,6 +23,8 @@
 #include "txt_utf8.h"
 #include "txt_window.h"
 
+#include "host.h"
+
 static void TXT_LabelSizeCalc(TXT_UNCAST_ARG(label))
 {
     TXT_CAST_ARG(txt_label_t, label);
@@ -99,8 +101,8 @@ static void TXT_LabelDestructor(TXT_UNCAST_ARG(label))
 {
     TXT_CAST_ARG(txt_label_t, label);
 
-    free(label->label);
-    free(label->lines);
+    myfree(label->label);
+    myfree(label->lines);
 }
 
 txt_widget_class_t txt_label_class =
@@ -121,12 +123,12 @@ void TXT_SetLabel(txt_label_t *label, const char *value)
 
     // Free back the old label
 
-    free(label->label);
-    free(label->lines);
+    myfree(label->label);
+    myfree(label->lines);
 
     // Set the new value
 
-    label->label = strdup(value);
+    label->label = mystrdup(value);
 
     // Work out how many lines in this label
 
@@ -142,7 +144,7 @@ void TXT_SetLabel(txt_label_t *label, const char *value)
 
     // Split into lines
 
-    label->lines = malloc(sizeof(char *) * label->h);
+    label->lines = mymalloc(sizeof(char *) * label->h);
     label->lines[0] = label->label;
     y = 1;
 
@@ -173,7 +175,7 @@ txt_label_t *TXT_NewLabel(const char *text)
 {
     txt_label_t *label;
 
-    label = malloc(sizeof(txt_label_t));
+    label = mymalloc(sizeof(txt_label_t));
 
     TXT_InitWidget(label, &txt_label_class);
     label->label = NULL;

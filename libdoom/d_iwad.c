@@ -306,12 +306,12 @@ static char *GetRegistryString(registry_value_t *reg_val)
     {
         // Allocate a buffer for the value and read the value
 
-        result = malloc(len + 1);
+        result = mymalloc(len + 1);
 
         if (RegQueryValueEx(key, reg_val->value, NULL, &valtype,
                             (unsigned char *) result, &len) != ERROR_SUCCESS)
         {
-            free(result);
+            myfree(result);
             result = NULL;
         }
         else
@@ -351,7 +351,7 @@ static void CheckUninstallStrings(void)
 
         if (unstr == NULL)
         {
-            free(val);
+            myfree(val);
         }
         else
         {
@@ -388,7 +388,7 @@ static void CheckInstallRootPaths(void)
             AddIWADDir(subpath);
         }
 
-        free(install_path);
+        myfree(install_path);
     }
 }
 
@@ -416,7 +416,7 @@ static void CheckSteamEdition(void)
         AddIWADDir(subpath);
     }
 
-    free(install_path);
+    myfree(install_path);
 }
 
 // The BFG edition ships with a full set of GUS patches. If we find them,
@@ -452,9 +452,9 @@ static void CheckSteamGUSPatches(void)
         M_SetVariable("gus_patch_path", patch_path);
     }
 
-    free(test_patch_path);
-    free(patch_path);
-    free(install_path);
+    myfree(test_patch_path);
+    myfree(patch_path);
+    myfree(install_path);
 }
 
 // Default install directories for DOS Doom
@@ -522,9 +522,9 @@ static char *CheckDirectoryHasIWAD(const char *dir, const char *iwadname)
         filename = M_StringJoin(dir, DIR_SEPARATOR_S, iwadname, NULL);
     }
 
-    free(probe);
+    myfree(probe);
     probe = M_FileCaseExists(filename);
-    free(filename);
+    myfree(filename);
     if (probe != NULL)
     {
         return probe;
@@ -625,7 +625,7 @@ static void AddIWADPath(const char *path, const char *suffix)
 
     AddIWADDir(M_StringJoin(left, suffix, NULL));
 
-    free(dup_path);
+    myfree(dup_path);
 }
 
 #ifndef _WIN32
@@ -663,7 +663,7 @@ static void AddXdgDirs(void)
     // ~/.local/share/games/doom) as a user-writeable extension to
     // the usual /usr/share/games/doom location.
     AddIWADDir(M_StringJoin(env, "/games/doom", NULL));
-    free(tmp_env);
+    myfree(tmp_env);
 
     // Quote:
     // > $XDG_DATA_DIRS defines the preference-ordered set of base
@@ -720,7 +720,7 @@ static void AddSteamDirs(void)
     AddIWADPath(steampath, "/Hexen/base");
     AddIWADPath(steampath, "/Hexen Deathkings of the Dark Citadel/base");
     AddIWADPath(steampath, "/Strife");
-    free(steampath);
+    myfree(steampath);
 }
 #endif // __MACOSX__
 #endif // !_WIN32
@@ -817,7 +817,7 @@ char *D_FindWADByName(const char *name)
         {
             return probe;
         }
-        free(probe);
+        myfree(probe);
 
         // Construct a string for the full path
 
@@ -829,7 +829,7 @@ char *D_FindWADByName(const char *name)
             return probe;
         }
 
-        free(path);
+        myfree(path);
     }
 
     // File not found
@@ -925,7 +925,7 @@ const iwad_t **D_FindAllIWADs(int mask)
     char *filename;
     int i;
 
-    result = malloc(sizeof(iwad_t *) * (arrlen(iwads) + 1));
+    result = mymalloc(sizeof(iwad_t *) * (arrlen(iwads) + 1));
     result_len = 0;
 
     // Try to find all IWADs

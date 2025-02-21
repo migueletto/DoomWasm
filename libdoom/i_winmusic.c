@@ -171,7 +171,7 @@ static void MidiError(const char *prefix, DWORD dwError)
     {
         char *error = M_ConvertWideToUtf8(werror);
         fprintf(stderr, "%s: %s.\n", prefix, error);
-        free(error);
+        myfree(error);
     }
     else
     {
@@ -1404,7 +1404,7 @@ static boolean I_WIN_InitMusic(void)
             if (i == all_devices - 1)
             {
                 // give up and use MIDI_MAPPER
-                free(winmm_midi_device);
+                myfree(winmm_midi_device);
                 winmm_midi_device = NULL;
             }
         }
@@ -1602,7 +1602,7 @@ static void *I_WIN_RegisterSong(void *data, int len)
     file = MIDI_LoadFile(filename);
 
     M_remove(filename);
-    free(filename);
+    myfree(filename);
 
     if (file == NULL)
     {
@@ -1634,7 +1634,7 @@ static void *I_WIN_RegisterSong(void *data, int len)
     tempo = prop_tempo.dwTempo;
 
     song.num_tracks = MIDI_NumTracks(file);
-    song.tracks = calloc(song.num_tracks, sizeof(win_midi_track_t));
+    song.tracks = mycalloc(song.num_tracks, sizeof(win_midi_track_t));
     for (i = 0; i < song.num_tracks; ++i)
     {
         song.tracks[i].iter = MIDI_IterateTrack(file, i);
@@ -1657,7 +1657,7 @@ static void I_WIN_UnRegisterSong(void *handle)
             MIDI_FreeIterator(song.tracks[i].iter);
             song.tracks[i].iter = NULL;
         }
-        free(song.tracks);
+        myfree(song.tracks);
         song.tracks = NULL;
     }
     if (handle)

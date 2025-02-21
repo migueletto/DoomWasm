@@ -23,6 +23,8 @@
 #include "txt_utf8.h"
 #include "txt_window.h"
 
+#include "host.h"
+
 static void TXT_SeparatorSizeCalc(TXT_UNCAST_ARG(separator))
 {
     TXT_CAST_ARG(txt_separator_t, separator);
@@ -71,16 +73,16 @@ static void TXT_SeparatorDestructor(TXT_UNCAST_ARG(separator))
 {
     TXT_CAST_ARG(txt_separator_t, separator);
 
-    free(separator->label);
+    myfree(separator->label);
 }
 
 void TXT_SetSeparatorLabel(txt_separator_t *separator, const char *label)
 {
-    free(separator->label);
+    myfree(separator->label);
 
     if (label != NULL)
     {
-        separator->label = strdup(label);
+        separator->label = mystrdup(label);
     }
     else
     {
@@ -103,7 +105,7 @@ txt_separator_t *TXT_NewSeparator(const char *label)
 {
     txt_separator_t *separator;
 
-    separator = malloc(sizeof(txt_separator_t));
+    separator = mymalloc(sizeof(txt_separator_t));
 
     TXT_InitWidget(separator, &txt_separator_class);
 

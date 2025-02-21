@@ -25,6 +25,8 @@
 #include "txt_separator.h"
 #include "txt_window.h"
 
+#include "host.h"
+
 #define HELP_KEY KEY_F1
 #define MAXWINDOWS 128
 
@@ -222,8 +224,8 @@ static void DrawHelpIndicator(void)
 
 void TXT_SetDesktopTitle(const char *title)
 {
-    free(desktop_title);
-    desktop_title = strdup(title);
+    myfree(desktop_title);
+    desktop_title = mystrdup(title);
     TXT_SetWindowTitle(title);
 }
 

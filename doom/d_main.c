@@ -721,7 +721,7 @@ static char *GetGameName(const char *gamename)
             // We also need to cut off spaces to get the basic name
 
             gamename_size = strlen(deh_sub) + 10;
-            deh_gamename = malloc(gamename_size);
+            deh_gamename = mymalloc(gamename_size);
             if (deh_gamename == NULL)
             {
                 I_Error("GetGameName: Failed to allocate new string");
@@ -1231,13 +1231,13 @@ static void LoadIwadDeh(void)
         // Look for chex.deh in the same directory as the IWAD file.
         dirname = M_DirName(iwadfile);
         chex_deh = M_StringJoin(dirname, DIR_SEPARATOR_S, "chex.deh", NULL);
-        free(dirname);
+        myfree(dirname);
 
         // If the dehacked patch isn't found, try searching the WAD
         // search path instead.  We might find it...
         if (!M_FileExists(chex_deh))
         {
-            free(chex_deh);
+            myfree(chex_deh);
             chex_deh = D_FindWADByName("chex.deh");
         }
 
@@ -1266,13 +1266,13 @@ static void LoadIwadDeh(void)
         dirname = M_DirName(iwadfile);
         french_deh = M_StringJoin(dirname, DIR_SEPARATOR_S, "french.deh", NULL);
         printf("French version\n");
-        free(dirname);
+        myfree(dirname);
 
         // If the dehacked patch isn't found, try searching the WAD
         // search path instead.  We might find it...
         if (!M_FileExists(french_deh))
         {
-            free(french_deh);
+            myfree(french_deh);
             french_deh = D_FindWADByName("french.deh");
         }
 
@@ -1616,7 +1616,7 @@ void D_DoomMain (void)
             {
                 DEH_AutoLoadPatches(autoload_dir);
                 W_AutoLoadWADs(autoload_dir);
-                free(autoload_dir);
+                myfree(autoload_dir);
             }
         }
 
@@ -1626,7 +1626,7 @@ void D_DoomMain (void)
         {
             DEH_AutoLoadPatches(autoload_dir);
             W_AutoLoadWADs(autoload_dir);
-            free(autoload_dir);
+            myfree(autoload_dir);
         }
     }
 #endif
@@ -1671,7 +1671,7 @@ void D_DoomMain (void)
 
     if (p)
     {
-        char *uc_filename = strdup(myargv[p + 1]);
+        char *uc_filename = mystrdup(myargv[p + 1]);
         M_ForceUppercase(uc_filename);
 
         // With Vanilla you have to specify the file without extension,
@@ -1685,7 +1685,7 @@ void D_DoomMain (void)
             DEH_snprintf(file, sizeof(file), "%s.lmp", myargv[p+1]);
         }
 
-        free(uc_filename);
+        myfree(uc_filename);
 
         if (D_AddFile(file))
         {

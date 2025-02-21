@@ -171,10 +171,10 @@ static void *ReadByteSequence(unsigned int num_bytes, FILE *stream)
     unsigned int i;
     byte *result;
 
-    // Allocate a buffer. Allocate one extra byte, as malloc(0) is
+    // Allocate a buffer. Allocate one extra byte, as mymalloc(0) is
     // non-portable.
 
-    result = malloc(num_bytes + 1);
+    result = mymalloc(num_bytes + 1);
 
     if (result == NULL)
     {
@@ -190,7 +190,7 @@ static void *ReadByteSequence(unsigned int num_bytes, FILE *stream)
         {
             fprintf(stderr, "ReadByteSequence: Error while reading byte %u\n",
                             i);
-            free(result);
+            myfree(result);
             return NULL;
         }
     }
@@ -398,11 +398,11 @@ static void FreeEvent(midi_event_t *event)
     {
         case MIDI_EVENT_SYSEX:
         case MIDI_EVENT_SYSEX_SPLIT:
-            free(event->data.sysex.data);
+            myfree(event->data.sysex.data);
             break;
 
         case MIDI_EVENT_META:
-            free(event->data.meta.data);
+            myfree(event->data.meta.data);
             break;
 
         default:
@@ -496,7 +496,7 @@ static void FreeTrack(midi_track_t *track)
         FreeEvent(&track->events[i]);
     }
 
-    free(track->events);
+    myfree(track->events);
 }
 
 static boolean ReadAllTracks(midi_file_t *file, FILE *stream)
@@ -505,7 +505,7 @@ static boolean ReadAllTracks(midi_file_t *file, FILE *stream)
 
     // Allocate list of tracks and read each track:
 
-    file->tracks = malloc(sizeof(midi_track_t) * file->num_tracks);
+    file->tracks = mymalloc(sizeof(midi_track_t) * file->num_tracks);
 
     if (file->tracks == NULL)
     {
@@ -575,10 +575,10 @@ void MIDI_FreeFile(midi_file_t *file)
             FreeTrack(&file->tracks[i]);
         }
 
-        free(file->tracks);
+        myfree(file->tracks);
     }
 
-    free(file);
+    myfree(file);
 }
 
 midi_file_t *MIDI_LoadFile(char *filename)
@@ -586,7 +586,7 @@ midi_file_t *MIDI_LoadFile(char *filename)
     midi_file_t *file;
     FILE *stream;
 
-    file = malloc(sizeof(midi_file_t));
+    file = mymalloc(sizeof(midi_file_t));
 
     if (file == NULL)
     {
@@ -647,7 +647,7 @@ midi_track_iter_t *MIDI_IterateTrack(midi_file_t *file, unsigned int track)
 
     assert(track < file->num_tracks);
 
-    iter = malloc(sizeof(*iter));
+    iter = mymalloc(sizeof(*iter));
     iter->track = &file->tracks[track];
     iter->position = 0;
     iter->loop_point = 0;
@@ -657,7 +657,7 @@ midi_track_iter_t *MIDI_IterateTrack(midi_file_t *file, unsigned int track)
 
 void MIDI_FreeIterator(midi_track_iter_t *iter)
 {
-    free(iter);
+    myfree(iter);
 }
 
 // Get the time until the next MIDI event in a track.

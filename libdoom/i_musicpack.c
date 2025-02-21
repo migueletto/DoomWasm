@@ -463,17 +463,17 @@ static void ParseVorbisComments(file_metadata_t *metadata, FILE *fs)
         comment_len = LONG(buf);
 
         // Read actual comment data into string buffer.
-        comment = calloc(1, comment_len + 1);
+        comment = mycalloc(1, comment_len + 1);
         if (comment == NULL
          || fread(comment, 1, comment_len, fs) < comment_len)
         {
-            free(comment);
+            myfree(comment);
             break;
         }
 
         // Parse comment string.
         ParseVorbisComment(metadata, comment);
-        free(comment);
+        myfree(comment);
     }
 }
 
@@ -728,7 +728,7 @@ static char *GetFullPath(const char *musicdir, const char *path)
     // Copy config filename and cut off the filename to just get the
     // parent dir.
     result = M_StringJoin(musicdir, systemized_path, NULL);
-    free(systemized_path);
+    myfree(systemized_path);
 
     return result;
 }
@@ -752,12 +752,12 @@ static char *ExpandFileExtension(const char *musicdir, const char *filename)
     {
         replaced = M_StringReplace(filename, ".{ext}", extns[i]);
         result = GetFullPath(musicdir, replaced);
-        free(replaced);
+        myfree(replaced);
         if (M_FileExists(result))
         {
             return result;
         }
-        free(result);
+        myfree(result);
     }
 
     return NULL;
@@ -804,7 +804,7 @@ static const char *ReadHashPrefix(char *line)
         return NULL;
     }
 
-    result = malloc(len + 1);
+    result = mymalloc(len + 1);
     if (result == NULL)
     {
         return NULL;
@@ -1003,7 +1003,7 @@ static void LoadSubstituteConfigs(void)
                subst_music_len - old_music_len);
     }
 
-    free(musicdir);
+    myfree(musicdir);
 }
 
 // Returns true if the given lump number is a music lump that should

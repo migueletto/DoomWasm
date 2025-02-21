@@ -26,6 +26,8 @@
 #include "txt_utf8.h"
 #include "txt_window.h"
 
+#include "host.h"
+
 static void TXT_WindowActionSizeCalc(TXT_UNCAST_ARG(action))
 {
     TXT_CAST_ARG(txt_window_action_t, action);
@@ -67,7 +69,7 @@ static void TXT_WindowActionDestructor(TXT_UNCAST_ARG(action))
 {
     TXT_CAST_ARG(txt_window_action_t, action);
 
-    free(action->label);
+    myfree(action->label);
 }
 
 static int TXT_WindowActionKeyPress(TXT_UNCAST_ARG(action), int key)
@@ -111,11 +113,11 @@ txt_window_action_t *TXT_NewWindowAction(int key, const char *label)
 {
     txt_window_action_t *action;
 
-    action = malloc(sizeof(txt_window_action_t));
+    action = mymalloc(sizeof(txt_window_action_t));
 
     TXT_InitWidget(action, &txt_window_action_class);
     action->key = key;
-    action->label = strdup(label);
+    action->label = mystrdup(label);
 
     return action;
 }

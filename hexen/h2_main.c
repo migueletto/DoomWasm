@@ -460,7 +460,7 @@ void D_DoomMain(void)
         {
             // TODO? DEH_AutoLoadPatches(autoload_dir);
             W_AutoLoadWADs(autoload_dir);
-            free(autoload_dir);
+            myfree(autoload_dir);
         }
     }
 #endif
@@ -702,7 +702,7 @@ static void HandleArgs(void)
 
         // With Vanilla Hexen you have to specify the file without
         // extension, but make that optional.
-        uc_filename = strdup(myargv[p + 1]);
+        uc_filename = mystrdup(myargv[p + 1]);
         M_ForceUppercase(uc_filename);
 
         if (!M_StringEndsWith(uc_filename, ".LMP"))
@@ -710,7 +710,7 @@ static void HandleArgs(void)
             M_StringConcat(file, ".lmp", sizeof(file));
         }
 
-        free(uc_filename);
+        myfree(uc_filename);
 
         if (W_AddFile(file) != NULL)
         {

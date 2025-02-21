@@ -1,7 +1,7 @@
 # DoomWasm
 
 This is an proof of concept port of Chocolate Doom (https://www.chocolate-doom.org/) to WebAssembly.
-It is not a complete port, as some features are missing (sound, save files).
+It is not a complete port, as some features are missing (sound, network play).
 It allows you to play single-player variants of these games: Doom, Heretic, Hexen and Strife.
 
 Supported Doom variants:  
@@ -45,5 +45,6 @@ http://localhost:8000/doom.html?game=doom&variant=2
 
 Game controls are arrow keys for movement, CTRL to fire, and ENTER and ESC as in standard Doom.
 You must click in the game canvas once before using keyboard controls.
+Save games and configuration files are saved into the browser's persistent storage (IndexedDB). Note that this will happen
+only if you quit the game normally, via the Quit option in the game menu.
 Like I said, this is a proof of concept. The script doom.js has minimal error checking, so things may break easily.
-There is some debug output to the browser console, if you are interested.

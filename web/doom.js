@@ -22,11 +22,13 @@ HEAP32 = new Int32Array(wasmMemory.buffer);
 
 var doomAlloc, doomInit, doomStep, doomKey;
 var last_ts = 0;
+var db;
+var files = [];
 
 // retrieve the context to draw on the HTML canvas
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
-ctx.font = "18px monospace";
+ctx.font = '18px monospace';
 
 // add keydown/keyup event listeners to canvas' parent div
 const display = document.getElementById('display');
@@ -43,6 +45,67 @@ display.addEventListener('keyup', function(e) {
 const image = new ImageData(canvas.width, canvas.height);
 const len = canvas.width * canvas.height * 4;
 
+function getStore(type) {
+  var tx = db.transaction('files', type);
+  return tx.objectStore('files');
+}
+
+function loadDB(action) {
+  var req = indexedDB.open('vfs', 1);
+  req.onupgradeneeded = function (evt) {
+    console.log('loadDB upgradeneeded');
+    evt.currentTarget.result.createObjectStore('files', { keyPath: 'path' });
+  };
+  req.onsuccess = function (evt) {
+    console.log('loadDB success');
+    db = this.result;
+
+    var store = getStore('readonly');
+    var cursorReq = store.openCursor();
+    cursorReq.onsuccess = function (evt) {
+      if (evt.target.result) {
+        console.log('found file ' + evt.target.result.value.path);
+        files[evt.target.result.value.path] = evt.target.result.value.data;
+        evt.target.result.continue();
+      } else {
+        console.log('no more files');
+        action();
+      }
+    };
+  };
+  req.onerror = function (evt) {
+    console.error('loadDB error', evt.target.errorCode);
+  };
+}
+
+function saveFile(obj) {
+  console.log('saving ' + obj.path);
+  var store = getStore('readwrite');
+  var delReq = store.delete(obj.path);
+  delReq.onsuccess = function (evt) {
+    var addReq = store.add(obj);
+    addReq.onsuccess = function (evt) {
+      console.log('saveFile ' + obj.path + ' sucess');
+    };
+    addReq.onerror = function (evt) {
+      console.error('saveFile ' + obj.path + ' error', this.error);
+    };
+  };
+  delReq.onerror = function (evt) {
+    console.error('saveFile ' + obj.path + ' error', this.error);
+  };
+}
+
+function saveDB() {
+  console.log('saveDB');
+
+  for (var path in files) {
+    var array = files[path];
+    var obj = { path: path, data: array };
+    saveFile(obj);
+  }
+}
+
 function draw(ts) {
   // reduce the frame rate a bit
   if ((ts - last_ts) > 100.0) {
@@ -52,6 +115,7 @@ function draw(ts) {
     // abort if doomStep returns NULL
     if (addr == 0) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      saveDB();
       return;
     }
 
@@ -105,10 +169,56 @@ function _console_log(addr) {
   console.log(decoder.decode(buffer));
 }
 
+function _file_size(name_addr) {
+  for (i = 0; HEAPU8[name_addr + i] != 0; i++);
+  const name = decoder.decode(HEAPU8.slice(name_addr, name_addr + i));
+  const array = files[name];
+  return array ? array.byteLength : -1;
+}
+
+function _file_read(name_addr, buffer_addr) {
+  for (i = 0; HEAPU8[name_addr + i] != 0; i++);
+  const name = decoder.decode(HEAPU8.slice(name_addr, name_addr + i));
+  console.log('reading file ' + name);
+  const array = files[name];
+  if (array) {
+    console.log('got ' + array.byteLength + ' bytes');
+    for (i = 0; i < array.byteLength; i++) {
+      HEAPU8[buffer_addr + i] = array[i];
+    }
+  }
+}
+
+function _file_write(name_addr, buffer_addr, n) {
+  for (i = 0; HEAPU8[name_addr + i] != 0; i++);
+  const name = decoder.decode(HEAPU8.slice(name_addr, name_addr + i));
+  const buffer = HEAPU8.slice(buffer_addr, buffer_addr + n);
+  console.log('saving file ' + name);
+  files[name] = buffer;
+}
+
+function _file_remove(name_addr) {
+  for (i = 0; HEAPU8[name_addr + i] != 0; i++);
+  const name = decoder.decode(HEAPU8.slice(name_addr, name_addr + i));
+  console.log('removing file ' + name);
+  delete files[name];
+}
+
+function _file_rename(oldname_addr, newname_addr) {
+  for (i = 0; HEAPU8[oldname_addr + i] != 0; i++);
+  const oldname = decoder.decode(HEAPU8.slice(oldname_addr, oldname_addr + i));
+  for (i = 0; HEAPU8[newname_addr + i] != 0; i++);
+  const newname = decoder.decode(HEAPU8.slice(newname_addr, newname_addr + i));
+  console.log('renaming file ' + oldname + ' to ' + newname);
+  files[newname] = files[oldname];
+  delete files[oldname];
+}
+
 // draws an error messages on the canvas
-function downloadError(name) {
+function downloadError(name, error) {
   const msg = 'Error: could not load ' + name;
   console.log(msg);
+  console.error(error);
   ctx.fillText(msg, 0, 18);
 }
 
@@ -131,8 +241,16 @@ function download(filename, action) {
     action();
 
   }).catch(error => {
-    downloadError(filename);
+    downloadError(filename, error);
   });
+}
+
+function _segfault() {
+  console.log('segfault');
+}
+
+function _alignfault() {
+  console.log('alignfault');
 }
 
 // the environment for the WASM runtime
@@ -145,6 +263,13 @@ var env = {
   'proc_exit': _proc_exit,
   'get_now': _get_now,
   'console_log': _console_log,
+  'file_size': _file_size,
+  'file_read': _file_read,
+  'file_write': _file_write,
+  'file_remove': _file_remove,
+  'file_rename': _file_rename,
+  'segfault': _segfault,
+  'alignfault': _alignfault,
 }
 
 // download and run the WASM code for the selected game
@@ -165,15 +290,17 @@ WebAssembly.instantiateStreaming(
   const buffer = HEAPU8.slice(addr, addr + i);
   const wadName = decoder.decode(buffer);
 
-  // download main WAD
-  download(wadName, function() {
-    if (typeof extraWadName !== 'undefined') {
-      // download extra WAD (if specified)
-      download(extraWadName, runGame);
-    } else {
-      runGame();
-    }
+  loadDB(function() {
+    // download main WAD
+    download(wadName, function() {
+      if (typeof extraWadName !== 'undefined') {
+        // download extra WAD (if specified)
+        download(extraWadName, runGame);
+      } else {
+        runGame();
+      }
+    });
   });
 }).catch(error => {
-  downloadError(gameWasm);
+  downloadError(gameWasm, error);
 });
