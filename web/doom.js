@@ -50,7 +50,7 @@ function getStore(type) {
   return tx.objectStore('files');
 }
 
-function loadDB(action) {
+function loadDB(name, action) {
   var req = indexedDB.open('vfs', 1);
   req.onupgradeneeded = function (evt) {
     console.log('loadDB upgradeneeded');
@@ -64,8 +64,11 @@ function loadDB(action) {
     var cursorReq = store.openCursor();
     cursorReq.onsuccess = function (evt) {
       if (evt.target.result) {
-        console.log('found file ' + evt.target.result.value.path);
-        files[evt.target.result.value.path] = evt.target.result.value.data;
+        const path = evt.target.result.value.path;
+        if (path.startsWith('/' + name + '/')) {
+          console.log('found file ' + path);
+          files[path] = evt.target.result.value.data;
+        }
         evt.target.result.continue();
       } else {
         console.log('no more files');
@@ -162,23 +165,25 @@ function _get_now(tp) {
 // string decoder
 var decoder = new TextDecoder('utf-8');
 
+function getString(addr) {
+  for (var i = 0; HEAPU8[addr + i] != 0; i++);
+  const buffer = HEAPU8.slice(addr, addr + i);
+  return decoder.decode(buffer);
+}
+
 // logs a string to the console
 function _console_log(addr) {
-  for (i = 0; HEAPU8[addr + i] != 0; i++);
-  const buffer = HEAPU8.slice(addr, addr + i);
-  console.log(decoder.decode(buffer));
+  console.log(getString(addr));
 }
 
 function _file_size(name_addr) {
-  for (i = 0; HEAPU8[name_addr + i] != 0; i++);
-  const name = decoder.decode(HEAPU8.slice(name_addr, name_addr + i));
+  const name = getString(name_addr);
   const array = files[name];
   return array ? array.byteLength : -1;
 }
 
 function _file_read(name_addr, buffer_addr) {
-  for (i = 0; HEAPU8[name_addr + i] != 0; i++);
-  const name = decoder.decode(HEAPU8.slice(name_addr, name_addr + i));
+  const name = getString(name_addr);
   console.log('reading file ' + name);
   const array = files[name];
   if (array) {
@@ -190,25 +195,21 @@ function _file_read(name_addr, buffer_addr) {
 }
 
 function _file_write(name_addr, buffer_addr, n) {
-  for (i = 0; HEAPU8[name_addr + i] != 0; i++);
-  const name = decoder.decode(HEAPU8.slice(name_addr, name_addr + i));
+  const name = getString(name_addr);
   const buffer = HEAPU8.slice(buffer_addr, buffer_addr + n);
   console.log('saving file ' + name);
   files[name] = buffer;
 }
 
 function _file_remove(name_addr) {
-  for (i = 0; HEAPU8[name_addr + i] != 0; i++);
-  const name = decoder.decode(HEAPU8.slice(name_addr, name_addr + i));
+  const name = getString(name_addr);
   console.log('removing file ' + name);
   delete files[name];
 }
 
 function _file_rename(oldname_addr, newname_addr) {
-  for (i = 0; HEAPU8[oldname_addr + i] != 0; i++);
-  const oldname = decoder.decode(HEAPU8.slice(oldname_addr, oldname_addr + i));
-  for (i = 0; HEAPU8[newname_addr + i] != 0; i++);
-  const newname = decoder.decode(HEAPU8.slice(newname_addr, newname_addr + i));
+  const oldname = getString(oldname_addr);
+  const newname = getString(newname_addr);
   console.log('renaming file ' + oldname + ' to ' + newname);
   files[newname] = files[oldname];
   delete files[oldname];
@@ -284,13 +285,13 @@ WebAssembly.instantiateStreaming(
   doomStep = obj.instance.exports.DoomStep;
   doomKey = obj.instance.exports.DoomKey;
 
-  // gets the WAD file name from the game and variant
-  const addr = obj.instance.exports.DoomWadName(variant);
-  for (i = 0; HEAPU8[addr + i] != 0; i++);
-  const buffer = HEAPU8.slice(addr, addr + i);
-  const wadName = decoder.decode(buffer);
+  // gets the game name
+  const name = getString(obj.instance.exports.DoomName());
 
-  loadDB(function() {
+  // gets the WAD file name from the game and variant
+  const wadName = getString(obj.instance.exports.DoomWadName(variant));
+
+  loadDB(name, function() {
     // download main WAD
     download(wadName, function() {
       if (typeof extraWadName !== 'undefined') {

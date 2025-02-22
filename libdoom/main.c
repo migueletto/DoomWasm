@@ -487,6 +487,10 @@ void *DoomWadAlloc(int len) {
   return extraWad.buffer;
 }
 
+char *DoomName() {
+  return gameName();
+}
+
 void *DoomStep(void) {
   if (first) {
     setIntVariable(gameMsgOn(), 0);
